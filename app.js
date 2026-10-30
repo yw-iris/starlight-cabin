@@ -1078,6 +1078,23 @@
     plat.receiveShadow = true;
     g.add(plat);
 
+    // 补齐楼梯上方的二楼空缺：地板向左延伸到墙边
+    var gx0 = -HW + 0.06, gx1 = x0 + 0.02;
+    var gw2 = gx1 - gx0;
+    var gap = new T.Mesh(new T.BoxGeometry(gw2, 0.2, d), M.wood);
+    gap.position.set((gx0 + gx1) / 2, LOFT.y - 0.1, cz);
+    gap.castShadow = true;
+    gap.receiveShadow = true;
+    g.add(gap);
+    var gapTop = new T.Mesh(new T.BoxGeometry(gw2 - 0.03, 0.05, d - 0.03), M.woodLight);
+    gapTop.position.set((gx0 + gx1) / 2, LOFT.y + 0.015, cz);
+    gapTop.receiveShadow = true;
+    g.add(gapTop);
+    // 楼梯井一侧的收边
+    var gapF = new T.Mesh(new T.BoxGeometry(gw2 + 0.06, 0.2, 0.09), M.creamTrim);
+    gapF.position.set((gx0 + gx1) / 2, LOFT.y - 0.05, z0 + 0.02);
+    g.add(gapF);
+
     var platTop = new T.Mesh(new T.BoxGeometry(w - 0.03, 0.05, d - 0.03), M.woodLight);
     platTop.position.set(cx, LOFT.y + 0.015, cz);
     platTop.receiveShadow = true;
@@ -1141,18 +1158,17 @@
     rug.receiveShadow = true;
     room.add(rug);
 
-    // 矮桌
-    var top = new T.Mesh(new T.CylinderGeometry(0.6, 0.6, 0.08, 28), M.woodLight);
-    top.position.set(tx, y + 0.44, tz);
+    // 矮桌（长方形浅木面 + 四条腿，参考阁楼照片）
+    var top = new T.Mesh(new T.BoxGeometry(1.4, 0.09, 0.95), M.woodLight);
+    top.position.set(tx, y + 0.42, tz);
     top.castShadow = true; top.receiveShadow = true;
     room.add(top);
-    var rim = new T.Mesh(new T.TorusGeometry(0.59, 0.028, 8, 30), M.wood);
-    rim.rotation.x = Math.PI / 2; rim.position.set(tx, y + 0.47, tz);
-    room.add(rim);
-    [[-0.36, -0.36], [0.36, -0.36], [-0.36, 0.36], [0.36, 0.36]].forEach(function (p) {
-      var leg = new T.Mesh(new T.BoxGeometry(0.09, 0.44, 0.09), M.wood);
-      leg.position.set(tx + p[0], y + 0.22, tz + p[1]);
-      leg.rotation.y = Math.PI / 4;
+    var apron = new T.Mesh(new T.BoxGeometry(1.32, 0.06, 0.87), M.wood);
+    apron.position.set(tx, y + 0.36, tz);
+    room.add(apron);
+    [[-0.6, -0.38], [0.6, -0.38], [-0.6, 0.38], [0.6, 0.38]].forEach(function (p) {
+      var leg = new T.Mesh(new T.BoxGeometry(0.1, 0.4, 0.1), M.woodDark);
+      leg.position.set(tx + p[0], y + 0.2, tz + p[1]);
       leg.castShadow = true;
       room.add(leg);
     });
@@ -2064,14 +2080,90 @@
   }
 
   var _fc1 = makeFlowerCushion(1.0);
-  _fc1.position.set(0.55, 0, 2.5);
-  _fc1.rotation.y = 0.5;
+  _fc1.position.set(-2.15, 0, 2.15);
+  _fc1.rotation.y = 1.15;
   room.add(_fc1);
 
   var _fc2 = makeFlowerCushion(0.92);
   _fc2.position.set(1.95, 0, -1.05);
   _fc2.rotation.y = -0.35;
   room.add(_fc2);
+
+  /* 开盖披萨盒（参考截图：纸盒 + 缺一块的披萨 + 腊肠与罗勒） */
+  (function pizzaBox() {
+    var g = new T.Group();
+    var card = std(0xc9955f, { roughness: 0.9 });
+    var cardIn = std(0xa87343, { roughness: 0.92 });
+
+    // 盒底 + 内壁
+    var base = new T.Mesh(new T.BoxGeometry(0.8, 0.05, 0.8), card);
+    base.position.y = 0.025;
+    g.add(base);
+    var bw = 0.8, wh = 0.09;
+    [
+      [bw, wh, 0, -0.4],
+      [bw, wh, 0, 0.4]
+    ].forEach(function (p) {
+      var wall = new T.Mesh(new T.BoxGeometry(p[0], p[1], 0.03), cardIn);
+      wall.position.set(p[2], 0.07, p[3]);
+      g.add(wall);
+    });
+    [-0.4, 0.4].forEach(function (xw) {
+      var wall = new T.Mesh(new T.BoxGeometry(0.03, wh, bw), cardIn);
+      wall.position.set(xw, 0.07, 0);
+      g.add(wall);
+    });
+
+    // 披萨（扇形缺口：a1=0 → a2=0.5 缺一块）
+    var R = 0.31;
+    var shape = new T.Shape();
+    shape.moveTo(0, 0);
+    shape.absarc(0, 0, R, 0.5, Math.PI * 2, false);
+    shape.lineTo(0, 0);
+    var pgeo = new T.ExtrudeGeometry(shape, { depth: 0.045, bevelEnabled: false, curveSegments: 26 });
+    pgeo.rotateX(-Math.PI / 2);
+    var pizza = new T.Mesh(pgeo, std(0xf0cf6e, { roughness: 0.85 }));
+    pizza.position.y = 0.05;
+    g.add(pizza);
+
+    // 饼边（弧长与缺口对应：2π-0.5）
+    var crust = new T.Mesh(new T.TorusGeometry(R - 0.035, 0.036, 8, 30, Math.PI * 2 - 0.5), std(0xd9a254, { roughness: 0.9 }));
+    crust.rotation.x = Math.PI / 2;
+    crust.position.y = 0.078;
+    g.add(crust);
+
+    // 腊肠片 + 罗勒碎
+    for (var pi = 0; pi < 9; pi++) {
+      var pa = 0.8 + (pi / 9) * (Math.PI * 2 - 0.9);
+      var pr = 0.06 + (pi % 3) * 0.07;
+      var pep = new T.Mesh(new T.CylinderGeometry(0.035, 0.035, 0.012, 10), std(0xd8503c, { roughness: 0.8 }));
+      pep.position.set(Math.cos(pa) * pr, 0.102, -Math.sin(pa) * pr);
+      g.add(pep);
+    }
+    for (var bi = 0; bi < 7; bi++) {
+      var ba = 0.7 + (bi / 7) * (Math.PI * 2 - 0.9);
+      var br = 0.1 + (bi % 4) * 0.055;
+      var bas = new T.Mesh(new T.BoxGeometry(0.032, 0.01, 0.022), M.leaf);
+      bas.position.set(Math.cos(ba) * br, 0.1, -Math.sin(ba) * br);
+      bas.rotation.y = rand(0, 3);
+      g.add(bas);
+    }
+
+    // 开盖（绕后缘铰链向后翻开）
+    var hinge = new T.Group();
+    hinge.position.set(0, 0.06, -0.4);
+    var lid = new T.Mesh(new T.BoxGeometry(0.82, 0.035, 0.8), card);
+    lid.position.set(0, 0, 0.4);
+    hinge.add(lid);
+    hinge.rotation.x = -1.98;
+    g.add(hinge);
+
+    g.position.set(1.02, 0, 2.52);
+    g.rotation.y = 2.55;
+    g.scale.setScalar(1.12);
+    shadowAll(g);
+    room.add(g);
+  })();
 
   /* =======================================================================
      17. 灯串（沿挂画墙 + 藤枝）

@@ -3257,11 +3257,12 @@
   });
 
   (function registerLights() {
+    // 命中盒只覆盖灯串本身（窄带），避免挡住其后方的背墙画作
     var hit = new T.Mesh(
-      new T.BoxGeometry(ROOM.w * 0.5, 0.9, 0.34),
+      new T.BoxGeometry(ROOM.w * 0.5, 0.3, 0.34),
       new T.MeshBasicMaterial({ visible: false })
     );
-    hit.position.set(-2.2, 5.0, -HD + 0.24);
+    hit.position.set(-1.5, 5.12, -HD + 0.24);
     var g = new T.Group();
     g.add(hit);
     room.add(g);
@@ -4203,6 +4204,7 @@
     scene: scene,
     room: room,
     camera: camera,
+    pickables: function () { return pickables; },
     stats: function () {
       var meshes = 0, groups = 0;
       room.traverse(function (o) {

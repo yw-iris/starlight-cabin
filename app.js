@@ -46,6 +46,10 @@
   /* 画框几何缓存 / 木色轮换计数（需在使用前初始化） */
   var _frameGeoCache = {}, _frameTone = 0;
 
+  /* 可交互物件池 / id 映射（register 在构建期即被调用，需提前初始化） */
+  var pickables = [];
+  var itemById = {};
+
   /* =======================================================================
      1. 几何工具
      ======================================================================= */
@@ -2032,6 +2036,12 @@
     leanCanvas.rotation.set(-0.62, 0.16, 0.02);
     shadowAll(leanCanvas);
     room.add(leanCanvas);
+
+    /* 画板可点击查看详情（不计入 8 项进度） */
+    registerInfo(leanCanvas, '倚墙画板', '山脚下的村庄，<br/>风刚好停在屋顶。', function () {
+      bounce(leanCanvas, 0.04);
+      Sound.chime(true);
+    });
   })();
 
   /* 向日葵花瓣坐垫（参考石拱龛照片里的地垫）：双层花瓣 + 蓬松中心 + 棕色纽扣 */
@@ -3080,8 +3090,6 @@
   /* =======================================================================
      21. 可交互物件注册
      ======================================================================= */
-  var pickables = [];
-  var itemById = {};
 
   function register(obj, id, extra) {
     var cfg = null;
@@ -3110,6 +3118,27 @@
     };
     pickables.push(wrap);
     itemById[id] = wrap;
+    return wrap;
+  }
+
+  /* 仅查看详情、不计入进度 / 不触发终章的物件（如倚墙画板） */
+  function registerInfo(obj, name, text, react) {
+    obj.updateWorldMatrix(true, false);
+    var wp = new T.Vector3();
+    var wq = new T.Quaternion();
+    obj.getWorldPosition(wp);
+    obj.getWorldQuaternion(wq);
+
+    var wrap = new T.Group();
+    wrap.position.copy(wp);
+    wrap.quaternion.copy(wq);
+    room.add(wrap);
+    wrap.add(obj);
+    obj.position.set(0, 0, 0);
+    obj.quaternion.identity();
+
+    wrap.userData = { id: '__info', name: name, text: text, found: false, hover: 1, infoOnly: true, react: react || null };
+    pickables.push(wrap);
     return wrap;
   }
 
@@ -3397,11 +3426,13 @@
     spawnSparks(worldPos(target), d.found ? 0xffd9a0 : 0xffc98a, d.found ? 6 : 16);
     if (d.react) { try { d.react(); } catch (err) {} }
     showToast(d.name, d.text);
-    if (!d.found) {
+    if (!d.found && !d.infoOnly) {
       d.found = true;
       found++;
       updateProgress();
       if (found >= CONFIG.items.length) setTimeout(finale, 1300);
+    } else if (d.infoOnly) {
+      d.found = true;     // 已看过，但仍不计入进度
     }
   }
 

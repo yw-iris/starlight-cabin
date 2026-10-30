@@ -50,6 +50,20 @@
   var pickables = [];
   var itemById = {};
 
+  /* 画作详情页文案（立着的画板 + 墙上画作共用）。ar = 画心宽高比，用于详情页按需重绘 */
+  var ART_INFO = {
+    starry:    { title: '星月夜',       series: '夜之诗',   ar: 1.5,  desc: '把整片夜空揉成漩涡，连月亮都舍不得闭上眼。风一吹，星星就轻轻晃。' },
+    sunflower: { title: '向日葵',       series: '清晨的桌布', ar: 1.35, desc: '十二朵向日葵挤在一起，像谁把整个夏天一把抱住，连影子都暖了起来。' },
+    blossom:   { title: '杏花',         series: '初春的信',  ar: 1.34, desc: '枝头刚绽的杏花，是写给今年春天的第一封短信，地址写在了风里。' },
+    windmill:  { title: '风车',         series: '远处的风',  ar: 1.32, desc: '风车慢慢转，把一朵云推到天边，又把另一朵轻轻接住。' },
+    hillside:  { title: '山脚下的村庄', series: '回家的路',  ar: 1.35, desc: '山脚亮起一盏灯，风刚好停在屋顶。远处的人，应该快到家了。' },
+    landscape: { title: '麦田与柏树',   series: '夏天的边界', ar: 1.38, desc: '柏树站成一道墨绿，安静地守着一整片金黄，直到黄昏落下来。' },
+    portrait:  { title: '自画像',       series: '镜子里的我', ar: 1.31, desc: '对着镜子画自己，画着画着就笑了——原来认真的样子，也很好看。' },
+    bedroom:   { title: '阿尔勒的卧室', series: '安睡的角落', ar: 1.29, desc: '床单是暖的，墙也是暖的。闭上眼，整个房间都在替你守着夜。' },
+    wheat:     { title: '麦田群鸦',     series: '黄昏的翅膀', ar: 1.32, desc: '乌鸦掠过麦浪，把黄昏惊起一层金。它们不说话，却飞得很认真。' },
+    cafe:      { title: '夜间咖啡馆',   series: '亮着的窗',  ar: 1.35, desc: '街角那盏灯一直亮着，为每一个夜归的人，留一截可以歇脚的光。' }
+  };
+
   /* =======================================================================
      1. 几何工具
      ======================================================================= */
@@ -1148,6 +1162,7 @@
       art.rotation.x = -0.16;
       art.rotation.y = 0.05 - i * 0.12;
       room.add(art);
+      registerArt(art, p.kind);
     });
   })();
 
@@ -1300,6 +1315,7 @@
     if (rotY) a.rotation.y = rotY;
     if (tilt) a.rotation.x = tilt;
     room.add(a);
+    registerArt(a, kind);
     return a;
   }
 
@@ -1343,11 +1359,13 @@
     lean.position.set(-3.9, 0.52, 2.55);
     lean.rotation.set(0, 0.42, 0.14);
     room.add(lean);
+    registerArt(lean, 'windmill');
 
     var lean2 = makeFramedArt('sunflower', 1.0, 0.8);
     lean2.position.set(-2.55, 0.45, 3.35);
     lean2.rotation.set(0, -0.5, -0.12);
     room.add(lean2);
+    registerArt(lean2, 'sunflower');
   })();
 
   /* 阁楼背墙装饰：补充画作 + 八角木框风景，避免大片空白 */
@@ -1400,6 +1418,7 @@
       g.add(glow);
       g.position.set(x, y, zBack);
       room.add(g);
+      registerArt(g, kind);
     }
     mountArt('starry', 1.55, 1.1, -3.05, 4.55, zBack, 0, 0);
     mountArt('sunflower', 1.12, 0.88, -1.42, 4.6, zBack, 0, 0);
@@ -1442,6 +1461,7 @@
 
       g.position.set(x, y, -HD + 0.07);
       room.add(g);
+      registerArt(g, kind);
     }
     niche(3.05, 3.42, 0.60, 'hillside');
     niche(4.30, 3.86, 0.48, 'landscape');
@@ -2021,6 +2041,7 @@
     g.scale.setScalar(0.8);
     shadowAll(g);
     room.add(g);
+    registerArt(g, 'landscape');   // 画架上的画作也可点击查看详情
 
     /* 旁边斜靠一块未装框的画布（参考石拱龛照片） */
     var leanCanvas = new T.Group();
@@ -2037,11 +2058,8 @@
     shadowAll(leanCanvas);
     room.add(leanCanvas);
 
-    /* 画板可点击查看详情（不计入 8 项进度） */
-    registerInfo(leanCanvas, '倚墙画板', '山脚下的村庄，<br/>风刚好停在屋顶。', function () {
-      bounce(leanCanvas, 0.04);
-      Sound.chime(true);
-    });
+    /* 立着的画板（倚墙画布）可点击进入详情页 */
+    registerArt(leanCanvas, 'hillside');
   })();
 
   /* 向日葵花瓣坐垫（参考石拱龛照片里的地垫）：双层花瓣 + 蓬松中心 + 棕色纽扣 */
@@ -3142,6 +3160,31 @@
     return wrap;
   }
 
+  /* 画作（立着的画板 / 墙上的画）：点击进入详情页，不计入 8 项进度、不弹小卡片 */
+  function registerArt(obj, kind) {
+    obj.updateWorldMatrix(true, false);
+    var wp = new T.Vector3();
+    var wq = new T.Quaternion();
+    obj.getWorldPosition(wp);
+    obj.getWorldQuaternion(wq);
+
+    var wrap = new T.Group();
+    wrap.position.copy(wp);
+    wrap.quaternion.copy(wq);
+    room.add(wrap);
+    wrap.add(obj);
+    obj.position.set(0, 0, 0);
+    obj.quaternion.identity();
+
+    var info = ART_INFO[kind] || { title: '画作', ar: 1.35 };
+    wrap.userData = {
+      id: '__art', name: info.title, artKind: kind, artDetail: true,
+      found: false, hover: 1, hint: '点我看详情'
+    };
+    pickables.push(wrap);
+    return wrap;
+  }
+
   register(sofa, 'sofa');
   register(gramoObj.group, 'gramo', {
     react: function () {
@@ -3251,7 +3294,7 @@
     cam.cPhi += (cam.tPhi - cam.cPhi) * k;
     cam.cR += (cam.tR - cam.cR) * k;
 
-    var swayAmp = clamp((idleT - 1.2) / 2.5, 0, 1) * 0.022;
+    var swayAmp = (artDetailOpen ? 0 : clamp((idleT - 1.2) / 2.5, 0, 1) * 0.022);
     swayT += dt * 0.22;
     var theta = cam.cTheta + Math.sin(swayT) * swayAmp;
     var phi = cam.cPhi + Math.cos(swayT * 0.7) * swayAmp * 0.3;
@@ -3358,6 +3401,7 @@
   var hovered = null;
   var tooltipEl = document.getElementById('tooltip');
   var tooltipName = document.getElementById('tooltip-name');
+  var tooltipHintEl = document.getElementById('tooltip-hint');
 
   function pickAt(ndc) {
     raycaster.setFromCamera(ndc, camera);
@@ -3372,6 +3416,7 @@
 
   function showTooltip(target) {
     tooltipName.textContent = target.userData.name;
+    tooltipHintEl.textContent = target.userData.hint || '点我看看';
     tooltipEl.style.left = tooltipScreen.x + 'px';
     tooltipEl.style.top = tooltipScreen.y + 'px';
     tooltipEl.classList.add('show');
@@ -3429,8 +3474,65 @@
     toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 5200);
   }
 
+  /* =======================================================================
+     24b. 画作详情页（点击墙上的画 / 立着的画板进入）
+     ======================================================================= */
+  var artDetailEl = document.getElementById('art-detail');
+  var artCanvas = document.getElementById('art-detail-canvas');
+  var artTitleEl = document.getElementById('art-detail-title');
+  var artSeriesEl = document.getElementById('art-detail-series');
+  var artDescEl = document.getElementById('art-detail-desc');
+  var artDetailOpen = false;
+
+  function openArtDetail(kind) {
+    var info = ART_INFO[kind] || { title: '画作', series: '', desc: '', ar: 1.35 };
+    var Hpx = 640, Wpx = Math.round(Hpx * info.ar);
+    artCanvas.width = Wpx;
+    artCanvas.height = Hpx;
+    var ctx = artCanvas.getContext('2d');
+    ctx.clearRect(0, 0, Wpx, Hpx);
+    try { drawArt(ctx, Wpx, Hpx, kind); } catch (e) { /* 忽略绘制异常 */ }
+
+    artTitleEl.textContent = info.title;
+    artSeriesEl.textContent = info.series ? '· ' + info.series + ' ·' : '';
+    artDescEl.textContent = info.desc;
+
+    if (Sound.on) Sound.page();
+
+    artDetailEl.classList.add('show');
+    artDetailEl.setAttribute('aria-hidden', 'false');
+    artDetailOpen = true;
+    hideTooltip();
+    hovered = null;
+  }
+
+  function closeArtDetail() {
+    artDetailEl.classList.remove('show');
+    artDetailEl.setAttribute('aria-hidden', 'true');
+    artDetailOpen = false;
+  }
+
+  if (artDetailEl) {
+    artDetailEl.addEventListener('click', function (e) {
+      if (e.target === artDetailEl || e.target.classList.contains('art-detail-backdrop') ||
+          e.target.id === 'art-detail-close') closeArtDetail();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && artDetailOpen) closeArtDetail();
+    });
+  }
+
   function triggerItem(target) {
     var d = target.userData;
+
+    /* 画作：打开详情页（大图 + 标题 + 描述），不弹小卡片、不计入进度 */
+    if (d.artDetail) {
+      openArtDetail(d.artKind);
+      bounce(target, 0.05);
+      spawnSparks(worldPos(target), 0xffc98a, 12);
+      return;
+    }
+
     bounce(target, 0.05);
     spawnSparks(worldPos(target), d.found ? 0xffd9a0 : 0xffc98a, d.found ? 6 : 16);
     if (d.react) { try { d.react(); } catch (err) {} }
@@ -3912,6 +4014,9 @@
     finale: finale,
     count: function () { return found; },
     musicPlaying: function () { return Sound.musicPlaying(); },
+    openArt: function (kind) { openArtDetail(kind); },
+    artOpen: function () { return artDetailOpen; },
+    closeArt: function () { closeArtDetail(); },
     scene: scene,
     room: room,
     stats: function () {

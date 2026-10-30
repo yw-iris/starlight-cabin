@@ -29,7 +29,7 @@
     </div>
   </div>
 
-  <div class="tooltip" id="tooltip"><b id="tooltip-name"></b><span>点我看看</span></div>
+  <div class="tooltip" id="tooltip"><b id="tooltip-name"></b><span id="tooltip-hint">点我看看</span></div>
 
   <div class="toast" id="toast" role="status" aria-live="polite">
     <div class="toast-stripe"></div>
@@ -40,6 +40,23 @@
   </div>
 
   <div class="scene-hint" id="scene-hint">拖动旋转 · 滚轮缩放 · 点击物件</div>
+
+  <!-- 画作详情页 -->
+  <div class="art-detail" id="art-detail" aria-hidden="true">
+    <div class="art-detail-backdrop"></div>
+    <div class="art-detail-panel">
+      <button class="art-detail-close" id="art-detail-close" type="button" aria-label="关闭详情">×</button>
+      <div class="art-detail-frame">
+        <canvas id="art-detail-canvas" width="480" height="360"></canvas>
+      </div>
+      <div class="art-detail-meta">
+        <div class="art-detail-series" id="art-detail-series"></div>
+        <h3 class="art-detail-title" id="art-detail-title"></h3>
+        <p class="art-detail-desc" id="art-detail-desc"></p>
+        <div class="art-detail-tip">点击空白处或按 Esc 关闭</div>
+      </div>
+    </div>
+  </div>
 
   <div class="veil" id="veil"><span>正在点亮阁楼…</span></div>
 </div>

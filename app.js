@@ -2149,17 +2149,17 @@
       g.add(bas);
     }
 
-    // 开盖（绕后缘铰链向后翻开）
+    // 开盖（绕后缘铰链向后翻开，立起倚在留声机边几上）
     var hinge = new T.Group();
     hinge.position.set(0, 0.06, -0.4);
     var lid = new T.Mesh(new T.BoxGeometry(0.82, 0.035, 0.8), card);
     lid.position.set(0, 0, 0.4);
     hinge.add(lid);
-    hinge.rotation.x = -1.98;
+    hinge.rotation.x = -1.52;
     g.add(hinge);
 
-    g.position.set(1.02, 0, 2.52);
-    g.rotation.y = 2.55;
+    g.position.set(1.05, 0, 2.42);
+    g.rotation.y = -0.59;
     g.scale.setScalar(1.12);
     shadowAll(g);
     room.add(g);

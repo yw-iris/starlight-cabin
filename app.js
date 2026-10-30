@@ -2061,8 +2061,8 @@
     shadowAll(leanCanvas);
     room.add(leanCanvas);
 
-    /* 立着的画板（倚墙画布）可点击进入详情页 */
-    registerArt(leanCanvas, 'hillside');
+    /* 立着的画板（倚墙画布）：点击打开「和你的约稿」专属作品页 */
+    registerCommission(leanCanvas, '画板');
   })();
 
   /* 向日葵花瓣坐垫（参考石拱龛照片里的地垫）：双层花瓣 + 蓬松中心 + 棕色纽扣 */
@@ -3192,6 +3192,30 @@
     return wrap;
   }
 
+  /* 画板：点击打开「和你的约稿」专属作品页（九张配色稿，可放大） */
+  function registerCommission(obj, name) {
+    obj.updateWorldMatrix(true, false);
+    var wp = new T.Vector3();
+    var wq = new T.Quaternion();
+    obj.getWorldPosition(wp);
+    obj.getWorldQuaternion(wq);
+
+    var wrap = new T.Group();
+    wrap.position.copy(wp);
+    wrap.quaternion.copy(wq);
+    room.add(wrap);
+    wrap.add(obj);
+    obj.position.set(0, 0, 0);
+    obj.quaternion.identity();
+
+    wrap.userData = {
+      id: '__art', name: name || '画板', commissionPage: true,
+      found: false, hover: 1, hint: '点我看约稿'
+    };
+    pickables.push(wrap);
+    return wrap;
+  }
+
   register(sofa, 'sofa');
   register(gramoObj.group, 'gramo', {
     react: function () {
@@ -3554,8 +3578,123 @@
     });
   }
 
+  /* -----------------------------------------------------------------------
+     24c. 「和你的约稿」专属作品页（九张配色稿，可放大观看）
+     ======================================================================= */
+  var COMMISSION_WORKS = [
+    { f: 'g1', name: '苔绿',   note: '清晨六点的林子' },
+    { f: 'g2', name: '新绿',   note: '正午的日头' },
+    { f: 'g3', name: '雾绿',   note: '要下雨之前' },
+    { f: 'w4', name: '秋橘',   note: '十月的傍晚' },
+    { f: 'w5', name: '蓝调',   note: '天还没黑透' },
+    { f: 'w6', name: '樱粉',   note: '四月的一场风' },
+    { f: 'n7', name: '晴空',   note: '云刚散开' },
+    { f: 'n8', name: '云隙光', note: '光从叶缝漏下来' },
+    { f: 'n9', name: '夜光',   note: '整片林子都亮了' }
+  ];
+
+  var commissionEl = document.getElementById('commission');
+  var commissionGrid = document.getElementById('commission-grid');
+  var commissionZoom = document.getElementById('commission-zoom');
+  var commissionZoomImg = document.getElementById('commission-zoom-img');
+  var commissionZoomCap = document.getElementById('commission-zoom-cap');
+  var commissionBuilt = false;
+
+  function buildCommissionGrid() {
+    if (commissionBuilt || !commissionGrid) return;
+    commissionGrid.innerHTML = '';
+    COMMISSION_WORKS.forEach(function (w) {
+      var src = 'commission/' + w.f + '.jpg';
+      var capText = w.name + ' · ' + w.note;
+      var cell = document.createElement('div');
+      cell.className = 'commission-cell';
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+      cell.setAttribute('aria-label', capText);
+      cell.setAttribute('data-src', src);
+      cell.setAttribute('data-cap', capText);
+      var img = document.createElement('img');
+      img.src = src;
+      img.alt = capText;
+      img.loading = 'lazy';
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.innerHTML = w.name + '<small>' + w.note + '</small>';
+      cell.appendChild(img);
+      cell.appendChild(cap);
+      commissionGrid.appendChild(cell);
+    });
+    commissionBuilt = true;
+  }
+
+  function zoomOpen() { return !!(commissionZoom && commissionZoom.classList.contains('show')); }
+  function openZoom(src, cap) {
+    if (!commissionZoom) return;
+    commissionZoomImg.src = src;
+    commissionZoomImg.alt = cap || '';
+    commissionZoomCap.textContent = cap || '';
+    commissionZoom.classList.add('show');
+    commissionZoom.setAttribute('aria-hidden', 'false');
+  }
+  function closeZoom() {
+    if (!commissionZoom) return;
+    commissionZoom.classList.remove('show');
+    commissionZoom.setAttribute('aria-hidden', 'true');
+  }
+
+  function openCommission() {
+    if (!commissionEl) return;
+    buildCommissionGrid();
+    if (artDetailOpen) closeArtDetail();
+    commissionEl.classList.add('show');
+    commissionEl.setAttribute('aria-hidden', 'false');
+    hideTooltip();
+    hovered = null;
+    if (Sound.on) Sound.page();
+  }
+  function closeCommission() {
+    if (!commissionEl) return;
+    closeZoom();
+    commissionEl.classList.remove('show');
+    commissionEl.setAttribute('aria-hidden', 'true');
+  }
+
+  if (commissionEl) {
+    commissionEl.addEventListener('click', function (e) {
+      if (e.target === commissionEl || e.target.classList.contains('commission-backdrop') ||
+          e.target.id === 'commission-close') closeCommission();
+    });
+    if (commissionGrid) {
+      commissionGrid.addEventListener('click', function (e) {
+        var cell = e.target.closest ? e.target.closest('.commission-cell') : null;
+        if (cell) openZoom(cell.getAttribute('data-src'), cell.getAttribute('data-cap'));
+      });
+      commissionGrid.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var cell = e.target.closest ? e.target.closest('.commission-cell') : null;
+        if (cell) { e.preventDefault(); openZoom(cell.getAttribute('data-src'), cell.getAttribute('data-cap')); }
+      });
+    }
+    if (commissionZoom) {
+      commissionZoom.addEventListener('click', function () { closeZoom(); });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (zoomOpen()) { closeZoom(); return; }
+      if (commissionEl.classList.contains('show')) closeCommission();
+    });
+  }
+
   function triggerItem(target) {
     var d = target.userData;
+
+    /* 画板：打开「和你的约稿」专属作品页 */
+    if (d.commissionPage) {
+      openCommission();
+      bounce(target, 0.05);
+      spawnSparks(worldPos(target), 0xffc98a, 12);
+      return;
+    }
 
     /* 画作：打开详情页（大图 + 标题 + 描述），不弹小卡片、不计入进度 */
     if (d.artDetail) {
@@ -4052,8 +4191,18 @@
     artOrder: function () { return artOrder.slice(); },
     artIndex: function () { return artCurrentIndex; },
     artNav: function (delta) { artRenderAt(artCurrentIndex + (delta || 1)); },
+    openCommission: function () { openCommission(); },
+    closeCommission: function () { closeCommission(); },
+    commissionOpen: function () { return !!(commissionEl && commissionEl.classList.contains('show')); },
+    commissionCount: function () { return COMMISSION_WORKS.length; },
+    openCommissionZoom: function (i) {
+      var w = COMMISSION_WORKS[i || 0];
+      if (w) openZoom('commission/' + w.f + '.jpg', w.name + ' · ' + w.note);
+    },
+    commissionZoomOpen: function () { return zoomOpen(); },
     scene: scene,
     room: room,
+    camera: camera,
     stats: function () {
       var meshes = 0, groups = 0;
       room.traverse(function (o) {

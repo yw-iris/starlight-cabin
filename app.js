@@ -50,6 +50,9 @@
   var pickables = [];
   var itemById = {};
 
+  /* 画作详情页浏览顺序：按注册顺序收集「去重」的题材，供上一张/下一张导航 */
+  var artOrder = [];
+
   /* 画作详情页文案（立着的画板 + 墙上画作共用）。ar = 画心宽高比，用于详情页按需重绘 */
   var ART_INFO = {
     starry:    { title: '星月夜',       series: '夜之诗',   ar: 1.5,  desc: '把整片夜空揉成漩涡，连月亮都舍不得闭上眼。风一吹，星星就轻轻晃。' },
@@ -3182,6 +3185,10 @@
       found: false, hover: 1, hint: '点我看详情'
     };
     pickables.push(wrap);
+
+    /* 记录去重题材顺序，供详情页上一张/下一张导航（仅在首次出现时入列） */
+    if (artOrder.indexOf(kind) === -1) artOrder.push(kind);
+
     return wrap;
   }
 
@@ -3482,9 +3489,17 @@
   var artTitleEl = document.getElementById('art-detail-title');
   var artSeriesEl = document.getElementById('art-detail-series');
   var artDescEl = document.getElementById('art-detail-desc');
+  var artCounterEl = document.getElementById('art-detail-counter');
+  var artPrevBtn = document.getElementById('art-detail-prev');
+  var artNextBtn = document.getElementById('art-detail-next');
   var artDetailOpen = false;
+  var artCurrentIndex = -1;
 
-  function openArtDetail(kind) {
+  function artRenderAt(index) {
+    if (!artOrder.length) return;
+    index = (index + artOrder.length) % artOrder.length;   // 循环浏览
+    artCurrentIndex = index;
+    var kind = artOrder[index];
     var info = ART_INFO[kind] || { title: '画作', series: '', desc: '', ar: 1.35 };
     var Hpx = 640, Wpx = Math.round(Hpx * info.ar);
     artCanvas.width = Wpx;
@@ -3496,8 +3511,14 @@
     artTitleEl.textContent = info.title;
     artSeriesEl.textContent = info.series ? '· ' + info.series + ' ·' : '';
     artDescEl.textContent = info.desc;
-
+    if (artCounterEl) artCounterEl.textContent = '第 ' + (index + 1) + ' / ' + artOrder.length + ' 幅';
     if (Sound.on) Sound.page();
+  }
+
+  function openArtDetail(kind) {
+    var index = artOrder.indexOf(kind);
+    if (index === -1) { artOrder.push(kind); index = artOrder.length - 1; }
+    artRenderAt(index);
 
     artDetailEl.classList.add('show');
     artDetailEl.setAttribute('aria-hidden', 'false');
@@ -3517,8 +3538,19 @@
       if (e.target === artDetailEl || e.target.classList.contains('art-detail-backdrop') ||
           e.target.id === 'art-detail-close') closeArtDetail();
     });
+    if (artPrevBtn) artPrevBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      artRenderAt(artCurrentIndex - 1);
+    });
+    if (artNextBtn) artNextBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      artRenderAt(artCurrentIndex + 1);
+    });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && artDetailOpen) closeArtDetail();
+      if (!artDetailOpen) return;
+      if (e.key === 'Escape') closeArtDetail();
+      else if (e.key === 'ArrowLeft') artRenderAt(artCurrentIndex - 1);
+      else if (e.key === 'ArrowRight') artRenderAt(artCurrentIndex + 1);
     });
   }
 
@@ -4017,6 +4049,9 @@
     openArt: function (kind) { openArtDetail(kind); },
     artOpen: function () { return artDetailOpen; },
     closeArt: function () { closeArtDetail(); },
+    artOrder: function () { return artOrder.slice(); },
+    artIndex: function () { return artCurrentIndex; },
+    artNav: function (delta) { artRenderAt(artCurrentIndex + (delta || 1)); },
     scene: scene,
     room: room,
     stats: function () {

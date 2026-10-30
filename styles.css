@@ -382,6 +382,39 @@ body {
   letter-spacing: 0.18em;
   color: rgba(236, 216, 190, 0.4);
 }
+.art-detail-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 6px;
+}
+.art-detail-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 220, 170, 0.34);
+  background: rgba(28, 18, 9, 0.6);
+  color: #f3e3cc;
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease, border-color .25s ease, transform .15s ease;
+}
+.art-detail-btn:hover {
+  background: rgba(106, 67, 31, 0.92);
+  border-color: rgba(255, 235, 205, 0.6);
+  color: #fff2dd;
+  transform: translateY(-1px);
+}
+.art-detail-btn:active { transform: translateY(0); }
+.art-detail-counter {
+  min-width: 86px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: rgba(236, 216, 190, 0.62);
+}
 
 /* =================== 动画 =================== */
 @keyframes twinkle {

@@ -402,27 +402,51 @@
 
     switch (kind) {
       case 'starry':
-        bgv('#1f2f56', '#4a5a80');
-        for (var s = 0; s < 3; s++) {
-          var cx = rand(w * 0.15, w * 0.85), cy = rand(h * 0.15, h * 0.6);
-          for (var a = 0; a < 46; a++) {
-            var ang = a / 46 * 6.283 * 3, rr = a / 46 * 46;
-            ctx.strokeStyle = 'rgba(180,200,240,' + rand(0.18, 0.5).toFixed(3) + ')';
-            ctx.lineWidth = rand(1, 2.6);
-            ctx.beginPath(); ctx.arc(cx, cy, rr, ang, ang + 0.6); ctx.stroke();
+        bgv('#16223f', '#3a4d78');
+        // 漩涡星云
+        for (var s = 0; s < 5; s++) {
+          var cx = rand(w * 0.15, w * 0.85), cy = rand(h * 0.15, h * 0.55);
+          var rr0 = rand(20, 50);
+          for (var a = 0; a < 70; a++) {
+            var t2 = a / 70, ang = t2 * 6.283 * 3.2, rr = t2 * rr0;
+            ctx.strokeStyle = 'rgba(' + randInt(190, 225) + ',' + randInt(205, 232) + ',' + randInt(235, 255) + ',' + rand(0.25, 0.7).toFixed(2) + ')';
+            ctx.lineWidth = rand(1.2, 3.2);
+            ctx.beginPath(); ctx.arc(cx, cy, rr, ang, ang + 0.7); ctx.stroke();
           }
         }
-        ctx.fillStyle = '#f6e08a';
-        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.22, 28, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,247,214,0.95)';
-        for (var i = 0; i < 44; i++) {
-          ctx.beginPath(); ctx.arc(rand(0, w), rand(0, h * 0.72), rand(1, 3.2), 0, 6.283); ctx.fill();
+        // 星（带光晕）
+        for (var i = 0; i < 46; i++) {
+          var sx2 = rand(0, w), sy2 = rand(0, h * 0.6), sr = rand(1, 3.4);
+          ctx.strokeStyle = 'rgba(255,240,180,0.45)'; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.arc(sx2, sy2, sr + rand(2, 4), 0, 6.283); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,248,214,' + rand(0.7, 1).toFixed(2) + ')';
+          ctx.beginPath(); ctx.arc(sx2, sy2, sr, 0, 6.283); ctx.fill();
         }
-        hill(h * 0.8, '#1e2540', 6);
-        ctx.fillStyle = '#23304a';
+        // 月亮
+        ctx.fillStyle = 'rgba(255,238,150,0.35)';
+        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.2, 40, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#f9e07e';
+        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.2, 27, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#fff3c4';
+        ctx.beginPath(); ctx.arc(w * 0.72, h * 0.185, 12, 0, 6.283); ctx.fill();
+        // 远山 + 村庄（亮窗）
+        hill(h * 0.8, '#232d4a', 6);
+        for (var v = 0; v < 9; v++) {
+          var vx = rand(w * 0.12, w * 0.92), vw = rand(6, 13), vhh = rand(9, 20);
+          ctx.fillStyle = '#1a2338';
+          ctx.fillRect(vx, h * 0.74 + rand(-5, 8), vw, vhh);
+          ctx.fillStyle = 'rgba(255,206,120,0.9)'; ctx.fillRect(vx + 2, h * 0.76, 2.5, 2.5);
+        }
+        // 丝柏（深色，带纹理）
+        ctx.fillStyle = '#0f1f2c';
         ctx.beginPath();
-        ctx.moveTo(w * 0.28, h); ctx.quadraticCurveTo(w * 0.2, h * 0.5, w * 0.28, h * 0.28);
-        ctx.quadraticCurveTo(w * 0.37, h * 0.5, w * 0.34, h); ctx.fill();
+        ctx.moveTo(w * 0.24, h); ctx.quadraticCurveTo(w * 0.15, h * 0.55, w * 0.24, h * 0.22);
+        ctx.quadraticCurveTo(w * 0.33, h * 0.55, w * 0.31, h); ctx.closePath(); ctx.fill();
+        for (var cyp = 0; cyp < 60; cyp++) {
+          ctx.strokeStyle = 'rgba(40,70,60,0.5)'; ctx.lineWidth = 1;
+          var cxy = rand(h * 0.25, h);
+          ctx.beginPath(); ctx.moveTo(w * 0.24 + rand(-6, 6), cxy); ctx.lineTo(w * 0.24 + rand(-4, 8), cxy + 10); ctx.stroke();
+        }
         break;
 
       case 'wheat':
@@ -508,30 +532,41 @@
         break;
 
       case 'sunflower':
-        bgv('#f2d24a', '#e0a72e');
+        bgv('#f6d84e', '#e6ab30');
+        strokes(160, function () { return 'rgba(230,180,60,0.16)'; }, 8, 22, 2, 5);
         // 花瓶
-        ctx.fillStyle = '#c98a3a';
+        ctx.fillStyle = '#c47c33';
         ctx.beginPath();
-        ctx.moveTo(w * 0.42, h * 0.62); ctx.lineTo(w * 0.58, h * 0.62);
-        ctx.lineTo(w * 0.55, h * 0.9); ctx.lineTo(w * 0.45, h * 0.9); ctx.closePath(); ctx.fill();
-        // 花
-        for (var sf = 0; sf < 7; sf++) {
-          var sx = w * 0.3 + sf * 0.06 * w + rand(-6, 6);
-          var sy = h * 0.18 + rand(0, h * 0.2);
-          var rad = rand(7, 12);
-          ctx.fillStyle = '#e8942a';
-          for (var pe = 0; pe < 12; pe++) {
-            var pea = pe / 12 * 6.283;
-            ctx.beginPath();
-            ctx.ellipse(sx + Math.cos(pea) * rad, sy + Math.sin(pea) * rad, rad * 0.5, rad * 0.24, pea, 0, 6.283);
-            ctx.fill();
+        ctx.moveTo(w * 0.4, h * 0.6); ctx.quadraticCurveTo(w * 0.34, h * 0.78, w * 0.42, h * 0.94);
+        ctx.lineTo(w * 0.58, h * 0.94); ctx.quadraticCurveTo(w * 0.66, h * 0.78, w * 0.6, h * 0.6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#a9652a'; ctx.fillRect(w * 0.4, h * 0.6, w * 0.2, h * 0.05);
+        // 花（高低错落）
+        var blooms = [
+          [0.34, 0.41, 15], [0.5, 0.30, 17], [0.66, 0.4, 14], [0.44, 0.24, 12],
+          [0.58, 0.22, 13], [0.3, 0.55, 11], [0.7, 0.56, 11]
+        ];
+        blooms.forEach(function (B) {
+          var sx = w * B[0], sy = h * B[1], rad = B[2];
+          ctx.strokeStyle = '#5f6f2e'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 8, h * 0.48, w * 0.5, h * 0.62); ctx.stroke();
+          for (var layer = 0; layer < 2; layer++) {
+            ctx.fillStyle = layer ? '#f0a02c' : '#d97e1e';
+            var r_r = rad * (layer ? 1 : 0.82), off = layer ? 0 : 0.26;
+            for (var pe = 0; pe < 14; pe++) {
+              var pea = pe / 14 * 6.283 + off;
+              ctx.beginPath();
+              ctx.ellipse(sx + Math.cos(pea) * r_r, sy + Math.sin(pea) * r_r, r_r * 0.46, r_r * 0.24, pea, 0, 6.283);
+              ctx.fill();
+            }
           }
-          ctx.fillStyle = '#6e4320';
-          ctx.beginPath(); ctx.arc(sx, sy, rad * 0.62, 0, 6.283); ctx.fill();
-          // 茎
-          ctx.strokeStyle = '#5a6a2a'; ctx.lineWidth = 2.4;
-          ctx.beginPath(); ctx.moveTo(sx, sy + rad); ctx.lineTo(w * 0.5 + rand(-6, 6), h * 0.62); ctx.stroke();
-        }
+          ctx.fillStyle = '#6a3f1c';
+          ctx.beginPath(); ctx.arc(sx, sy, rad * 0.6, 0, 6.283); ctx.fill();
+          ctx.fillStyle = '#8a5a26';
+          for (var sd = 0; sd < 18; sd++) {
+            var sa = sd / 18 * 6.283;
+            ctx.beginPath(); ctx.arc(sx + Math.cos(sa) * rad * 0.42, sy + Math.sin(sa) * rad * 0.42, 1.1, 0, 6.283); ctx.fill();
+          }
+        });
         break;
 
       case 'windmill':
@@ -600,7 +635,7 @@
 
     // 统一色罩：让所有挂画带一点暖橙调
     ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = 'rgba(240,170,90,0.08)';
+    ctx.fillStyle = 'rgba(240,170,90,0.045)';
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'source-over';
   }
@@ -675,8 +710,8 @@
     floorEdge: std(0x6e3f22, { roughness: 0.85 }),
     base: std(0x7a4526, { roughness: 0.9 }),
 
-    frame: std(0xd8641c, { roughness: 0.66, envMapIntensity: 0.45 }),
-    frameDark: std(0x9c3f0c, { roughness: 0.76 }),
+    frame: std(0xe7cda0, { roughness: 0.68, envMapIntensity: 0.4 }),   // 米白/浅木外框
+    frameDark: std(0xc4722e, { roughness: 0.72 }),                      // 暖橙内衬
     wood: std(0x9d5f30, { roughness: 0.72 }),
     woodLight: std(0xb57a45, { roughness: 0.75 }),
     woodDark: std(0x6f4424, { roughness: 0.72 }),
@@ -1079,34 +1114,35 @@
      ======================================================================= */
   function makeFramedArt(kind, w, h) {
     var g = new T.Group();
-    var bw = 0.105;                       // 边框宽度
-    var dep = 0.11;                       // 画框厚度
-    var W = w + bw * 2, H = h + bw * 2;
+    var bw = 0.085;                       // 米白外框宽度
+    var mg = 0.06;                        // 橙内衬留边
+    var dep = 0.1;
+    var winW = w + mg * 2, winH = h + mg * 2;
+    var W = winW + bw * 2, H = winH + bw * 2;
 
-    // 背板（让画心后面不透光）
-    var back = softBox(W - 0.02, H - 0.02, 0.05, 0.008, 0.008, M.frameDark);
-    back.position.z = -0.012;
+    // 背板 = 暖橙内衬（露在画心与米白框之间）
+    var back = softBox(winW, winH, 0.05, 0.008, 0.01, M.frameDark);
+    back.position.z = -0.016;
     g.add(back);
 
-    // 四条边（中空），画心才能露出来
-    var bars = [
-      [W, bw, 0, (h + bw) / 2],
-      [W, bw, 0, -(h + bw) / 2],
-      [bw, h, -(w + bw) / 2, 0],
-      [bw, h, (w + bw) / 2, 0]
-    ];
-    bars.forEach(function (b) {
+    // 米白/浅木外框（中空，露出橙内衬与画心）
+    [
+      [W, bw, 0, (winH + bw) / 2],
+      [W, bw, 0, -(winH + bw) / 2],
+      [bw, winH, -(winW + bw) / 2, 0],
+      [bw, winH, (winW + bw) / 2, 0]
+    ].forEach(function (b) {
       var bar = softBox(b[0], b[1], dep, 0.014, 0.012, M.frame);
-      bar.position.set(b[2], b[3], dep * 0.28);
+      bar.position.set(b[2], b[3], dep * 0.3);
       g.add(bar);
     });
 
     // 画心
     var art = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshStandardMaterial({
-      map: artTex(kind), roughness: 0.82,
-      emissive: 0xffffff, emissiveMap: artTex(kind), emissiveIntensity: 0.18
+      map: artTex(kind), roughness: 0.84,
+      emissive: 0xffffff, emissiveMap: artTex(kind), emissiveIntensity: 0.1
     }));
-    art.position.z = 0.024;   // 略高于背板，仍凹在边框内
+    art.position.z = 0.012;
     g.add(art);
     shadowAll(g);
     return g;
@@ -1166,6 +1202,38 @@
     lean2.position.set(-2.55, 0.45, 3.35);
     lean2.rotation.set(0, -0.5, -0.12);
     room.add(lean2);
+  })();
+
+  /* 阁楼背墙装饰：补充画作 + 八角木框风景，避免大片空白 */
+  (function loftWallDecor() {
+    var zBack = -HD + 0.06;
+    function octFrame(x, y, r, kind) {
+      var g = new T.Group();
+      var ring = new T.Mesh(new T.TorusGeometry(r, 0.05, 6, 8), M.frame);
+      g.add(ring);
+      var disc = new T.Mesh(new T.CircleGeometry(r - 0.07, 8), new T.MeshStandardMaterial({
+        map: artTex(kind), roughness: 0.85, side: T.DoubleSide,
+        emissive: 0xffffff, emissiveMap: artTex(kind), emissiveIntensity: 0.1
+      }));
+      disc.position.z = 0.008;
+      g.add(disc);
+      var glow = new T.Sprite(new T.SpriteMaterial({
+        map: texGlow, color: 0xffb877, transparent: true, opacity: 0.16,
+        blending: T.AdditiveBlending, depthWrite: false
+      }));
+      glow.scale.setScalar(r * 3.4);
+      noRaycast(glow);
+      g.add(glow);
+      g.position.set(x, y, zBack);
+      room.add(g);
+    }
+    mountArt('starry', 1.55, 1.1, -3.05, 4.55, zBack, 0, 0);
+    mountArt('sunflower', 1.12, 0.88, -1.42, 4.6, zBack, 0, 0);
+    mountArt('blossom', 1.28, 0.95, 0.2, 4.45, zBack, 0, 0);
+    mountArt('windmill', 0.9, 0.72, -4.55, 4.55, zBack, 0, 0);
+    octFrame(-2.35, 3.42, 0.56, 'hillside');
+    octFrame(0.82, 3.52, 0.5, 'landscape');
+    octFrame(-0.62, 3.38, 0.4, 'blossom');
   })();
 
   /* =======================================================================
@@ -1774,8 +1842,8 @@
     canvasBack.rotation.x = -0.06;
     g.add(canvasBack);
 
-    g.position.set(2.62, 0, -2.78);
-    g.rotation.y = 0.28;
+    g.position.set(-3.85, 0, 1.15);
+    g.rotation.y = 0.8;
     shadowAll(g);
     room.add(g);
   })();
@@ -1883,6 +1951,12 @@
     new T.Vector3(5.7, 4.34, ALCOVE.z + 0.14),
     4, 0.26, 1.1
   );
+  // 阁楼背墙顶部
+  buildStringLights(
+    new T.Vector3(-4.2, 5.15, -HD + 0.14),
+    new T.Vector3(1.15, 5.05, -HD + 0.14),
+    5, 0.26, 1.3
+  );
 
   /* 藤枝（挂画墙上的褐色枝条 + 叶子） */
   (function vines() {
@@ -1934,6 +2008,12 @@
       new T.Vector3(5.68, 0.7, ALCOVE.z + 0.08),
       new T.Vector3(5.56, 2.6, ALCOVE.z + 0.1),
       new T.Vector3(5.34, 4.2, ALCOVE.z + 0.08)
+    );
+    // 阁楼背墙攀爬藤
+    branch(
+      new T.Vector3(-4.1, 2.9, -HD + 0.14),
+      new T.Vector3(-1.6, 4.1, -HD + 0.16),
+      new T.Vector3(0.9, 5.2, -HD + 0.14)
     );
   })();
 
@@ -2001,14 +2081,23 @@
       room.add(b);
     }
 
-    // 地毯上的小坐垫
-    var cush = softBox(0.8, 0.16, 0.8, 0.05, 0.12, M.cushionPale);
-    cush.position.set(0.55, 0.1, 2.5);
-    cush.rotation.y = 0.3;
-    room.add(cush);
-    var btn = new T.Mesh(new T.SphereGeometry(0.045, 10, 8), M.cushionDeep);
-    btn.position.set(0.55, 0.185, 2.5);
-    room.add(btn);
+    // 地毯上的奶油色圆墩坐垫（Sky 风）
+    var pouf = new T.Group();
+    var pbody = new T.Mesh(new T.CylinderGeometry(0.47, 0.5, 0.24, 28), M.cushionPale);
+    pbody.position.y = 0.12; pbody.castShadow = true; pbody.receiveShadow = true;
+    pouf.add(pbody);
+    var ptop = new T.Mesh(new T.SphereGeometry(0.47, 24, 12, 0, 6.283, 0, Math.PI / 2), M.cushionPale);
+    ptop.scale.set(1, 0.55, 1); ptop.position.y = 0.24; ptop.castShadow = true;
+    pouf.add(ptop);
+    var ppipe = new T.Mesh(new T.TorusGeometry(0.485, 0.032, 8, 32), M.cushionSoft);
+    ppipe.rotation.x = Math.PI / 2; ppipe.position.y = 0.2;
+    pouf.add(ppipe);
+    var ptuft = new T.Mesh(new T.SphereGeometry(0.05, 12, 10), M.cushionSoft);
+    ptuft.scale.y = 0.6; ptuft.position.y = 0.4;
+    pouf.add(ptuft);
+    pouf.position.set(0.55, 0, 2.5);
+    shadowAll(pouf);
+    room.add(pouf);
 
     /* 右石墙上的圆菇形搁板 ×2 */
     function roundShelf(y, z) {
@@ -2099,6 +2188,12 @@
       body.position.y = 1.02;
       g.add(body);
 
+      // 奶油色肚皮
+      var belly = new T.Mesh(new T.SphereGeometry(0.72, 24, 18), std(0xf7e7c8, { roughness: 0.95 }));
+      belly.scale.set(1.0, 1.0, 0.4);
+      belly.position.set(0, 0.72, 0.7);
+      g.add(belly);
+
       // 前面垂下来的两团圆
       [[-0.86, 0.72, 0.62, 0.95], [0.9, 0.66, 0.55, 0.86]].forEach(function (q) {
         var lump = new T.Mesh(new T.SphereGeometry(0.62, 20, 16), bodyMat2);
@@ -2115,18 +2210,17 @@
         g.add(foot);
       });
 
-      // 眼睛：深色菱形
+      // 眼睛：黑色小方眼
       [-1, 1].forEach(function (sd) {
-        var eye = new T.Mesh(new T.OctahedronGeometry(0.1, 0), std(0x6b3a1c, { roughness: 0.8 }));
-        eye.scale.set(1, 1.25, 0.5);
-        eye.position.set(sd * 0.33, 0.98, 1.02);
-        eye.rotation.z = Math.PI / 4;
+        var eye = new T.Mesh(new T.BoxGeometry(0.13, 0.17, 0.05), std(0x241812, { roughness: 0.6 }));
+        eye.position.set(sd * 0.34, 0.99, 1.03);
+        eye.rotation.z = sd * 0.12;
         g.add(eye);
       });
-      // 嘴巴
-      var mouth = new T.Mesh(new T.SphereGeometry(0.14, 14, 10), std(0xd9732a, { roughness: 0.9 }));
-      mouth.scale.set(1.2, 0.6, 0.5);
-      mouth.position.set(0, 0.72, 1.06);
+      // 橙色小嘴
+      var mouth = new T.Mesh(new T.SphereGeometry(0.13, 14, 10), std(0xe8902e, { roughness: 0.85 }));
+      mouth.scale.set(1.5, 0.78, 1.1);
+      mouth.position.set(0, 0.72, 1.1);
       g.add(mouth);
 
       shadowAll(g);
@@ -2367,27 +2461,51 @@
 
     switch (kind) {
       case 'starry':
-        bgv('#1f2f56', '#4a5a80');
-        for (var s = 0; s < 3; s++) {
-          var cx = rand(w * 0.15, w * 0.85), cy = rand(h * 0.15, h * 0.6);
-          for (var a = 0; a < 46; a++) {
-            var ang = a / 46 * 6.283 * 3, rr = a / 46 * 46;
-            ctx.strokeStyle = 'rgba(180,200,240,' + rand(0.18, 0.5).toFixed(3) + ')';
-            ctx.lineWidth = rand(1, 2.6);
-            ctx.beginPath(); ctx.arc(cx, cy, rr, ang, ang + 0.6); ctx.stroke();
+        bgv('#16223f', '#3a4d78');
+        // 漩涡星云
+        for (var s = 0; s < 5; s++) {
+          var cx = rand(w * 0.15, w * 0.85), cy = rand(h * 0.15, h * 0.55);
+          var rr0 = rand(20, 50);
+          for (var a = 0; a < 70; a++) {
+            var t2 = a / 70, ang = t2 * 6.283 * 3.2, rr = t2 * rr0;
+            ctx.strokeStyle = 'rgba(' + randInt(190, 225) + ',' + randInt(205, 232) + ',' + randInt(235, 255) + ',' + rand(0.25, 0.7).toFixed(2) + ')';
+            ctx.lineWidth = rand(1.2, 3.2);
+            ctx.beginPath(); ctx.arc(cx, cy, rr, ang, ang + 0.7); ctx.stroke();
           }
         }
-        ctx.fillStyle = '#f6e08a';
-        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.22, 28, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,247,214,0.95)';
-        for (var i = 0; i < 44; i++) {
-          ctx.beginPath(); ctx.arc(rand(0, w), rand(0, h * 0.72), rand(1, 3.2), 0, 6.283); ctx.fill();
+        // 星（带光晕）
+        for (var i = 0; i < 46; i++) {
+          var sx2 = rand(0, w), sy2 = rand(0, h * 0.6), sr = rand(1, 3.4);
+          ctx.strokeStyle = 'rgba(255,240,180,0.45)'; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.arc(sx2, sy2, sr + rand(2, 4), 0, 6.283); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,248,214,' + rand(0.7, 1).toFixed(2) + ')';
+          ctx.beginPath(); ctx.arc(sx2, sy2, sr, 0, 6.283); ctx.fill();
         }
-        hill(h * 0.8, '#1e2540', 6);
-        ctx.fillStyle = '#23304a';
+        // 月亮
+        ctx.fillStyle = 'rgba(255,238,150,0.35)';
+        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.2, 40, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#f9e07e';
+        ctx.beginPath(); ctx.arc(w * 0.74, h * 0.2, 27, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#fff3c4';
+        ctx.beginPath(); ctx.arc(w * 0.72, h * 0.185, 12, 0, 6.283); ctx.fill();
+        // 远山 + 村庄（亮窗）
+        hill(h * 0.8, '#232d4a', 6);
+        for (var v = 0; v < 9; v++) {
+          var vx = rand(w * 0.12, w * 0.92), vw = rand(6, 13), vhh = rand(9, 20);
+          ctx.fillStyle = '#1a2338';
+          ctx.fillRect(vx, h * 0.74 + rand(-5, 8), vw, vhh);
+          ctx.fillStyle = 'rgba(255,206,120,0.9)'; ctx.fillRect(vx + 2, h * 0.76, 2.5, 2.5);
+        }
+        // 丝柏（深色，带纹理）
+        ctx.fillStyle = '#0f1f2c';
         ctx.beginPath();
-        ctx.moveTo(w * 0.28, h); ctx.quadraticCurveTo(w * 0.2, h * 0.5, w * 0.28, h * 0.28);
-        ctx.quadraticCurveTo(w * 0.37, h * 0.5, w * 0.34, h); ctx.fill();
+        ctx.moveTo(w * 0.24, h); ctx.quadraticCurveTo(w * 0.15, h * 0.55, w * 0.24, h * 0.22);
+        ctx.quadraticCurveTo(w * 0.33, h * 0.55, w * 0.31, h); ctx.closePath(); ctx.fill();
+        for (var cyp = 0; cyp < 60; cyp++) {
+          ctx.strokeStyle = 'rgba(40,70,60,0.5)'; ctx.lineWidth = 1;
+          var cxy = rand(h * 0.25, h);
+          ctx.beginPath(); ctx.moveTo(w * 0.24 + rand(-6, 6), cxy); ctx.lineTo(w * 0.24 + rand(-4, 8), cxy + 10); ctx.stroke();
+        }
         break;
 
       case 'wheat':
@@ -2473,30 +2591,41 @@
         break;
 
       case 'sunflower':
-        bgv('#f2d24a', '#e0a72e');
+        bgv('#f6d84e', '#e6ab30');
+        strokes(160, function () { return 'rgba(230,180,60,0.16)'; }, 8, 22, 2, 5);
         // 花瓶
-        ctx.fillStyle = '#c98a3a';
+        ctx.fillStyle = '#c47c33';
         ctx.beginPath();
-        ctx.moveTo(w * 0.42, h * 0.62); ctx.lineTo(w * 0.58, h * 0.62);
-        ctx.lineTo(w * 0.55, h * 0.9); ctx.lineTo(w * 0.45, h * 0.9); ctx.closePath(); ctx.fill();
-        // 花
-        for (var sf = 0; sf < 7; sf++) {
-          var sx = w * 0.3 + sf * 0.06 * w + rand(-6, 6);
-          var sy = h * 0.18 + rand(0, h * 0.2);
-          var rad = rand(7, 12);
-          ctx.fillStyle = '#e8942a';
-          for (var pe = 0; pe < 12; pe++) {
-            var pea = pe / 12 * 6.283;
-            ctx.beginPath();
-            ctx.ellipse(sx + Math.cos(pea) * rad, sy + Math.sin(pea) * rad, rad * 0.5, rad * 0.24, pea, 0, 6.283);
-            ctx.fill();
+        ctx.moveTo(w * 0.4, h * 0.6); ctx.quadraticCurveTo(w * 0.34, h * 0.78, w * 0.42, h * 0.94);
+        ctx.lineTo(w * 0.58, h * 0.94); ctx.quadraticCurveTo(w * 0.66, h * 0.78, w * 0.6, h * 0.6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#a9652a'; ctx.fillRect(w * 0.4, h * 0.6, w * 0.2, h * 0.05);
+        // 花（高低错落）
+        var blooms = [
+          [0.34, 0.41, 15], [0.5, 0.30, 17], [0.66, 0.4, 14], [0.44, 0.24, 12],
+          [0.58, 0.22, 13], [0.3, 0.55, 11], [0.7, 0.56, 11]
+        ];
+        blooms.forEach(function (B) {
+          var sx = w * B[0], sy = h * B[1], rad = B[2];
+          ctx.strokeStyle = '#5f6f2e'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 8, h * 0.48, w * 0.5, h * 0.62); ctx.stroke();
+          for (var layer = 0; layer < 2; layer++) {
+            ctx.fillStyle = layer ? '#f0a02c' : '#d97e1e';
+            var r_r = rad * (layer ? 1 : 0.82), off = layer ? 0 : 0.26;
+            for (var pe = 0; pe < 14; pe++) {
+              var pea = pe / 14 * 6.283 + off;
+              ctx.beginPath();
+              ctx.ellipse(sx + Math.cos(pea) * r_r, sy + Math.sin(pea) * r_r, r_r * 0.46, r_r * 0.24, pea, 0, 6.283);
+              ctx.fill();
+            }
           }
-          ctx.fillStyle = '#6e4320';
-          ctx.beginPath(); ctx.arc(sx, sy, rad * 0.62, 0, 6.283); ctx.fill();
-          // 茎
-          ctx.strokeStyle = '#5a6a2a'; ctx.lineWidth = 2.4;
-          ctx.beginPath(); ctx.moveTo(sx, sy + rad); ctx.lineTo(w * 0.5 + rand(-6, 6), h * 0.62); ctx.stroke();
-        }
+          ctx.fillStyle = '#6a3f1c';
+          ctx.beginPath(); ctx.arc(sx, sy, rad * 0.6, 0, 6.283); ctx.fill();
+          ctx.fillStyle = '#8a5a26';
+          for (var sd = 0; sd < 18; sd++) {
+            var sa = sd / 18 * 6.283;
+            ctx.beginPath(); ctx.arc(sx + Math.cos(sa) * rad * 0.42, sy + Math.sin(sa) * rad * 0.42, 1.1, 0, 6.283); ctx.fill();
+          }
+        });
         break;
 
       case 'windmill':
@@ -2565,7 +2694,7 @@
 
     // 统一色罩：让所有挂画带一点暖橙调
     ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = 'rgba(240,170,90,0.08)';
+    ctx.fillStyle = 'rgba(240,170,90,0.045)';
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'source-over';
   }

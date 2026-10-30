@@ -3,66 +3,45 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0e0c16" />
-<title>星光小屋 · 把一整个夜晚，都送给你</title>
+<meta name="theme-color" content="#1a1108" />
+<title>星光阁楼 · 把一整个夜晚，都送给你</title>
 <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
 
-<div class="app">
+<!-- ============ 全屏 3D 舞台 ============ -->
+<div class="stage" id="pane-scene">
+  <canvas id="scene"></canvas>
 
-  <!-- ============ 左：文字 ============ -->
-  <section class="pane-text">
-    <header class="brand">
-      <span class="brand-star">✦</span>
-      <span>星光小屋</span>
-      <span class="brand-sub">STARLIGHT&nbsp;CABIN</span>
-    </header>
-
-    <div class="hero">
-      <h1 class="headline">把一整个夜晚，<br /><em>都送给你。</em></h1>
-      <p class="sub">
-        欢迎来到，藏着小心意的星光小屋。<br />
-        点点喜欢的东西，惊喜会慢慢出现。
-      </p>
+  <!-- 浮动 HUD -->
+  <div class="hud" id="hud">
+    <div class="progress">
+      <span class="dots" id="dots" aria-hidden="true"></span>
+      <span class="progress-count" id="count">0&nbsp;/&nbsp;8</span>
     </div>
-
-    <footer class="foot">
-      <div class="progress">
-        <span class="progress-label">惊喜</span>
-        <span class="dots" id="dots" aria-hidden="true"></span>
-        <span class="progress-count" id="count">0&nbsp;/&nbsp;8</span>
-      </div>
-      <p class="hint">拖动旋转 · 滚轮缩放 · 点击物件</p>
-      <div class="actions">
-        <button class="btn" id="btn-sound" type="button" aria-pressed="false">
-          <span class="btn-ico">♪</span><span id="sound-label">声音 · 关</span>
-        </button>
-        <button class="btn" id="btn-reset" type="button">
-          <span class="btn-ico">↺</span><span>回到初始视角</span>
-        </button>
-      </div>
-    </footer>
-  </section>
-
-  <!-- ============ 右：3D ============ -->
-  <section class="pane-scene" id="pane-scene">
-    <canvas id="scene"></canvas>
-
-    <div class="tooltip" id="tooltip"><b id="tooltip-name"></b><span>点我看看</span></div>
-
-    <div class="toast" id="toast" role="status" aria-live="polite">
-      <div class="toast-stripe"></div>
-      <div class="toast-body">
-        <b class="toast-name" id="toast-name"></b>
-        <p class="toast-text" id="toast-text"></p>
-      </div>
+    <div class="actions">
+      <button class="btn" id="btn-sound" type="button" aria-pressed="false">
+        <span class="btn-ico">♪</span><span id="sound-label">声音</span>
+      </button>
+      <button class="btn" id="btn-reset" type="button" aria-label="回到初始视角">
+        <span class="btn-ico">↺</span>
+      </button>
     </div>
+  </div>
 
-    <div class="scene-hint" id="scene-hint">在画面里拖动试试</div>
+  <div class="tooltip" id="tooltip"><b id="tooltip-name"></b><span>点我看看</span></div>
 
-    <div class="veil" id="veil"><span>正在点亮小屋…</span></div>
-  </section>
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toast-stripe"></div>
+    <div class="toast-body">
+      <b class="toast-name" id="toast-name"></b>
+      <p class="toast-text" id="toast-text"></p>
+    </div>
+  </div>
+
+  <div class="scene-hint" id="scene-hint">拖动旋转 · 滚轮缩放 · 点击物件</div>
+
+  <div class="veil" id="veil"><span>正在点亮阁楼…</span></div>
 </div>
 
 <!-- ============ 终章 ============ -->

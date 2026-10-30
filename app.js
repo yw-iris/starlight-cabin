@@ -43,6 +43,9 @@
   var randInt = function (a, b) { return Math.floor(rand(a, b + 1)); };
   var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
 
+  /* 画框几何缓存 / 木色轮换计数（需在使用前初始化） */
+  var _frameGeoCache = {}, _frameTone = 0;
+
   /* =======================================================================
      1. 几何工具
      ======================================================================= */
@@ -505,10 +508,10 @@
         break;
 
       case 'blossom':
-        bgv('#b9cbd0', '#d6e0d8');
-        strokes(120, function () { return 'rgba(150,170,175,0.14)'; }, 6, 16, 2, 4);
+        bgv('#4f8079', '#7fa699');
+        strokes(140, function () { return 'rgba(120,150,140,0.16)'; }, 6, 16, 2, 4);
         // 枝
-        ctx.strokeStyle = '#7a5536'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.strokeStyle = '#4a3220'; ctx.lineWidth = 7; ctx.lineCap = 'round';
         function branch(x0, y0, x1, y1) {
           ctx.beginPath(); ctx.moveTo(x0, y0);
           ctx.quadraticCurveTo((x0 + x1) / 2 + rand(-20, 20), (y0 + y1) / 2, x1, y1);
@@ -518,16 +521,24 @@
         branch(w * 0.5, h * 0.42, w * 0.82, h * 0.25);
         branch(w * 0.5, h * 0.42, w * 0.6, h * 0.1);
         branch(w * 0.5, h * 0.42, w * 0.3, h * 0.22);
-        // 花
-        for (var fl = 0; fl < 40; fl++) {
-          var fx = rand(w * 0.12, w * 0.92), fy = rand(h * 0.06, h * 0.6);
-          ctx.fillStyle = 'rgba(255,248,240,' + rand(0.7, 1).toFixed(2) + ')';
+        // 细枝
+        ctx.strokeStyle = '#5a3e28'; ctx.lineWidth = 3;
+        for (var tw = 0; tw < 10; tw++) {
+          var bx = rand(w * 0.2, w * 0.85), by = rand(h * 0.12, h * 0.55);
+          ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + rand(-30, 30), by + rand(-24, 24)); ctx.stroke();
+        }
+        // 花（白 + 淡粉）
+        for (var fl = 0; fl < 54; fl++) {
+          var fx = rand(w * 0.1, w * 0.94), fy = rand(h * 0.04, h * 0.62);
+          var pinkish = fl % 4 === 0;
+          ctx.fillStyle = pinkish ? 'rgba(252,214,222,0.95)' : 'rgba(255,250,244,' + rand(0.8, 1).toFixed(2) + ')';
+          var pr = rand(3.5, 6);
           for (var pt = 0; pt < 5; pt++) {
             var fa = pt / 5 * 6.283;
-            ctx.beginPath(); ctx.ellipse(fx + Math.cos(fa) * 4, fy + Math.sin(fa) * 4, 3, 2, fa, 0, 6.283); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(fx + Math.cos(fa) * pr * 0.9, fy + Math.sin(fa) * pr * 0.9, pr * 0.75, pr * 0.5, fa, 0, 6.283); ctx.fill();
           }
-          ctx.fillStyle = '#e8c56a';
-          ctx.beginPath(); ctx.arc(fx, fy, 1.6, 0, 6.283); ctx.fill();
+          ctx.fillStyle = '#d9a63e';
+          ctx.beginPath(); ctx.arc(fx, fy, 2, 0, 6.283); ctx.fill();
         }
         break;
 
@@ -710,8 +721,10 @@
     floorEdge: std(0x6e3f22, { roughness: 0.85 }),
     base: std(0x7a4526, { roughness: 0.9 }),
 
-    frame: std(0xe7cda0, { roughness: 0.68, envMapIntensity: 0.4 }),   // 米白/浅木外框
-    frameDark: std(0xc4722e, { roughness: 0.72 }),                      // 暖橙内衬
+    frame: std(0xa8661f, { roughness: 0.58, envMapIntensity: 0.32 }),    // 暖琥珀木框
+    frameLight: std(0xc98a45, { roughness: 0.62, envMapIntensity: 0.26 }), // 浅木框
+    frameDeep: std(0x7d4514, { roughness: 0.64 }),                      // 深琥珀木框
+    frameDark: std(0x6f3d15, { roughness: 0.8 }),                       // 深色内衬/阴影缝
     wood: std(0x9d5f30, { roughness: 0.72 }),
     woodLight: std(0xb57a45, { roughness: 0.75 }),
     woodDark: std(0x6f4424, { roughness: 0.72 }),
@@ -1036,6 +1049,14 @@
       g.add(pot);
     });
 
+    // 台阶上的向日葵盆栽（参考楼梯照片）
+    [2, 5].forEach(function (k, idx) {
+      var sf = buildSunflower(0.6 + idx * 0.08);
+      sf.position.set(STAIR.x0 + 1.32 - idx * 0.3, STAIR.rise * (k + 1), STAIR.z0 - STAIR.run * (k + 0.5));
+      sf.rotation.y = rand(-0.9, 0.9);
+      g.add(sf);
+    });
+
     room.add(g);
   })();
 
@@ -1109,41 +1130,146 @@
     });
   })();
 
+  /* 阁楼小角落：矮桌 + 橙色坐凳（奶油靠背）+ 花瓶 + 玩偶 + 盆栽（参考阁楼照片） */
+  (function loftNook() {
+    var y = LOFT.y + 0.04;
+    var tx = -1.75, tz = -3.85;
+
+    // 圆形小地毯
+    var rug = new T.Mesh(new T.CylinderGeometry(1.2, 1.2, 0.03, 30), std(0xcf7b34, { roughness: 0.98 }));
+    rug.position.set(tx, y + 0.016, tz);
+    rug.receiveShadow = true;
+    room.add(rug);
+
+    // 矮桌
+    var top = new T.Mesh(new T.CylinderGeometry(0.6, 0.6, 0.08, 28), M.woodLight);
+    top.position.set(tx, y + 0.44, tz);
+    top.castShadow = true; top.receiveShadow = true;
+    room.add(top);
+    var rim = new T.Mesh(new T.TorusGeometry(0.59, 0.028, 8, 30), M.wood);
+    rim.rotation.x = Math.PI / 2; rim.position.set(tx, y + 0.47, tz);
+    room.add(rim);
+    [[-0.36, -0.36], [0.36, -0.36], [-0.36, 0.36], [0.36, 0.36]].forEach(function (p) {
+      var leg = new T.Mesh(new T.BoxGeometry(0.09, 0.44, 0.09), M.wood);
+      leg.position.set(tx + p[0], y + 0.22, tz + p[1]);
+      leg.rotation.y = Math.PI / 4;
+      leg.castShadow = true;
+      room.add(leg);
+    });
+
+    // 桌上的花瓶 + 紫粉小花
+    var vase = new T.Group();
+    var vprof = [];
+    for (var i = 0; i <= 10; i++) {
+      var t = i / 10;
+      vprof.push(new T.Vector2(0.07 + Math.sin(t * Math.PI * 0.85) * 0.07, t * 0.28));
+    }
+    vase.add(new T.Mesh(new T.LatheGeometry(vprof, 18), std(0xe9dccb, { roughness: 0.7 })));
+    var fcol = [std(0xd98fd0, { roughness: 0.85 }), std(0xb98bd6, { roughness: 0.85 }), std(0xf3b8d8, { roughness: 0.85 })];
+    for (var b = 0; b < 6; b++) {
+      var aa = b / 6 * Math.PI * 2;
+      var hh = 0.16 + (b % 3) * 0.05;
+      var st = new T.Mesh(new T.CylinderGeometry(0.006, 0.008, hh, 4), M.leafDark);
+      st.position.set(Math.cos(aa) * 0.04, 0.28 + hh / 2, Math.sin(aa) * 0.04);
+      vase.add(st);
+      var bud = new T.Mesh(new T.SphereGeometry(0.035, 8, 6), fcol[b % 3]);
+      bud.position.set(Math.cos(aa) * 0.06, 0.28 + hh, Math.sin(aa) * 0.06);
+      vase.add(bud);
+    }
+    vase.position.set(tx + 0.05, y + 0.48, tz - 0.05);
+    shadowAll(vase);
+    room.add(vase);
+
+    // 橙色坐凳 + 奶油靠背（左右各一）
+    [[-1.0, 0.62, -0.5], [0.85, 0.6, 0.3]].forEach(function (q) {
+      var seat = new T.Group();
+      var s1 = new T.Mesh(new T.BoxGeometry(0.92, 0.2, 0.8), M.cushionSoft);
+      s1.position.y = 0.1; s1.castShadow = true; seat.add(s1);
+      var s2 = new T.Mesh(new T.BoxGeometry(0.96, 0.12, 0.84), M.cushion);
+      s2.position.y = 0.24; seat.add(s2);
+      var back = new T.Mesh(new T.BoxGeometry(0.86, 0.55, 0.18), std(0xf0e2c6, { roughness: 0.96 }));
+      back.position.set(0, 0.5, -0.32);
+      seat.add(back);
+      seat.position.set(tx + q[0], y + 0.02, tz + q[1]);
+      seat.rotation.y = q[2];
+      shadowAll(seat);
+      room.add(seat);
+    });
+
+    // 坐凳上的白色玩偶
+    var pl = new T.Group();
+    var fur = std(0xfdf8ef, { roughness: 0.96 });
+    var pb = new T.Mesh(new T.SphereGeometry(0.26, 18, 14), fur);
+    pb.scale.set(0.9, 1.15, 0.85); pb.position.y = 0.28; pl.add(pb);
+    var ph = new T.Mesh(new T.SphereGeometry(0.2, 18, 14), fur);
+    ph.position.y = 0.62; pl.add(ph);
+    [-1, 1].forEach(function (sd) {
+      var ear = new T.Mesh(new T.ConeGeometry(0.05, 0.12, 8), fur);
+      ear.position.set(sd * 0.08, 0.78, 0); pl.add(ear);
+      var eye = new T.Mesh(new T.SphereGeometry(0.018, 8, 8), M.dark);
+      eye.position.set(sd * 0.07, 0.64, 0.16); pl.add(eye);
+    });
+    pl.position.set(tx - 0.98, y + 0.28, tz + 0.5);
+    pl.rotation.y = 0.6;
+    shadowAll(pl);
+    room.add(pl);
+
+    // 盆栽
+    var np = buildSmallPlant(1.25);
+    np.position.set(tx + 1.35, y, tz - 0.9);
+    room.add(np);
+  })();
+
   /* =======================================================================
      8. 挂画（厚木框 + 梵高风）
      ======================================================================= */
+  /* 厚木画框几何缓存：外轮廓 - 内孔，带斜切倒角，仿油画框质感 */
+  function frameGeo(W, H, bw, dep) {
+    var k = W.toFixed(3) + '|' + H.toFixed(3) + '|' + bw.toFixed(3) + '|' + dep.toFixed(3);
+    if (_frameGeoCache[k]) return _frameGeoCache[k];
+    var ox = W / 2, oy = H / 2, ix = ox - bw, iy = oy - bw;
+    var s = new T.Shape();
+    s.moveTo(-ox, -oy); s.lineTo(ox, -oy); s.lineTo(ox, oy); s.lineTo(-ox, oy); s.lineTo(-ox, -oy);
+    var hole = new T.Path();
+    hole.moveTo(-ix, -iy); hole.lineTo(-ix, iy); hole.lineTo(ix, iy); hole.lineTo(ix, -iy); hole.lineTo(-ix, -iy);
+    s.holes.push(hole);
+    var geo = new T.ExtrudeGeometry(s, {
+      depth: dep, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.022,
+      bevelSegments: 2, curveSegments: 1
+    });
+    geo.translate(0, 0, -dep / 2);
+    _frameGeoCache[k] = geo;
+    return geo;
+  }
+  function frameToneMat() {
+    var n = (_frameTone++) % 5;
+    return n === 0 ? M.frameLight : (n === 3 ? M.frameDeep : M.frame);
+  }
+
   function makeFramedArt(kind, w, h) {
     var g = new T.Group();
-    var bw = 0.085;                       // 米白外框宽度
-    var mg = 0.06;                        // 橙内衬留边
     var dep = 0.1;
-    var winW = w + mg * 2, winH = h + mg * 2;
-    var W = winW + bw * 2, H = winH + bw * 2;
+    var bw = clamp(Math.min(w, h) * 0.11 + 0.03, 0.06, 0.14);
+    var W = w + bw * 2, H = h + bw * 2;
 
-    // 背板 = 暖橙内衬（露在画心与米白框之间）
-    var back = softBox(winW, winH, 0.05, 0.008, 0.01, M.frameDark);
-    back.position.z = -0.016;
-    g.add(back);
-
-    // 米白/浅木外框（中空，露出橙内衬与画心）
-    [
-      [W, bw, 0, (winH + bw) / 2],
-      [W, bw, 0, -(winH + bw) / 2],
-      [bw, winH, -(winW + bw) / 2, 0],
-      [bw, winH, (winW + bw) / 2, 0]
-    ].forEach(function (b) {
-      var bar = softBox(b[0], b[1], dep, 0.014, 0.012, M.frame);
-      bar.position.set(b[2], b[3], dep * 0.3);
-      g.add(bar);
-    });
-
-    // 画心
+    var tex = artTex(kind);
+    // 画心（微微内凹）
     var art = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshStandardMaterial({
-      map: artTex(kind), roughness: 0.84,
-      emissive: 0xffffff, emissiveMap: artTex(kind), emissiveIntensity: 0.1
+      map: tex, roughness: 0.88, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.12
     }));
     art.position.z = 0.012;
     g.add(art);
+
+    // 深色内衬（画心与木框之间的阴影缝）
+    var liner = new T.Mesh(new T.BoxGeometry(W + 0.006, H + 0.006, 0.05), M.frameDark);
+    liner.position.z = -0.022;
+    g.add(liner);
+
+    // 厚木框（倒角斜切，立体感强）
+    var frame = new T.Mesh(frameGeo(W, H, bw, dep), frameToneMat());
+    frame.castShadow = true;
+    g.add(frame);
+
     shadowAll(g);
     return g;
   }
@@ -1209,14 +1335,42 @@
     var zBack = -HD + 0.06;
     function octFrame(x, y, r, kind) {
       var g = new T.Group();
-      var ring = new T.Mesh(new T.TorusGeometry(r, 0.05, 6, 8), M.frame);
-      g.add(ring);
-      var disc = new T.Mesh(new T.CircleGeometry(r - 0.07, 8), new T.MeshStandardMaterial({
-        map: artTex(kind), roughness: 0.85, side: T.DoubleSide,
-        emissive: 0xffffff, emissiveMap: artTex(kind), emissiveIntensity: 0.1
+      var n = 9;
+      function pts(rad) {
+        var arr = [];
+        for (var i = 0; i < n; i++) {
+          var a = i / n * Math.PI * 2 - Math.PI / 2;
+          var rr = rad * (1 + (i % 2 ? 0.055 : -0.035) + (i % 3 === 0 ? 0.03 : 0));
+          arr.push([Math.cos(a) * rr, Math.sin(a) * rr]);
+        }
+        return arr;
+      }
+      var op = pts(r), shape = new T.Shape();
+      shape.moveTo(op[0][0], op[0][1]);
+      for (var i = 1; i < n; i++) shape.lineTo(op[i][0], op[i][1]);
+      shape.lineTo(op[0][0], op[0][1]);
+      var ip = pts(r - 0.11), hole = new T.Path();
+      hole.moveTo(ip[0][0], ip[0][1]);
+      for (var j = 1; j < n; j++) hole.lineTo(ip[j][0], ip[j][1]);
+      hole.closePath();
+      shape.holes.push(hole);
+      var geo = new T.ExtrudeGeometry(shape, {
+        depth: 0.1, bevelEnabled: true, bevelThickness: 0.02,
+        bevelSize: 0.022, bevelSegments: 2, curveSegments: 1
+      });
+      geo.translate(0, 0, -0.05);
+      var frame = new T.Mesh(geo, (Math.random() > 0.5 ? M.frame : M.frameDeep));
+      frame.castShadow = true;
+      g.add(frame);
+
+      var tex = artTex(kind);
+      var disc = new T.Mesh(new T.CircleGeometry(r - 0.13, n), new T.MeshStandardMaterial({
+        map: tex, roughness: 0.88, side: T.DoubleSide,
+        emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.1
       }));
-      disc.position.z = 0.008;
+      disc.position.z = 0.006;
       g.add(disc);
+
       var glow = new T.Sprite(new T.SpriteMaterial({
         map: texGlow, color: 0xffb877, transparent: true, opacity: 0.16,
         blending: T.AdditiveBlending, depthWrite: false
@@ -1842,34 +1996,82 @@
     canvasBack.rotation.x = -0.06;
     g.add(canvasBack);
 
-    g.position.set(-3.85, 0, 1.15);
-    g.rotation.y = 0.8;
+    g.position.set(2.48, 0, 0.55);
+    g.rotation.y = 0.5;
+    g.scale.setScalar(0.8);
     shadowAll(g);
     room.add(g);
+
+    /* 旁边斜靠一块未装框的画布（参考石拱龛照片） */
+    var leanCanvas = new T.Group();
+    var lb = new T.Mesh(new T.BoxGeometry(0.95, 0.72, 0.05), M.cream);
+    leanCanvas.add(lb);
+    var la = new T.Mesh(new T.PlaneGeometry(0.88, 0.66), new T.MeshStandardMaterial({
+      map: artTex('hillside'), roughness: 0.9, side: T.DoubleSide,
+      emissive: 0xffffff, emissiveMap: artTex('hillside'), emissiveIntensity: 0.06
+    }));
+    la.position.z = 0.032;
+    leanCanvas.add(la);
+    leanCanvas.position.set(4.92, 0.36, -1.52);
+    leanCanvas.rotation.set(-0.62, 0.16, 0.02);
+    shadowAll(leanCanvas);
+    room.add(leanCanvas);
   })();
 
-  (function buildFlowerCushion() {
+  /* 向日葵花瓣坐垫（参考石拱龛照片里的地垫）：双层花瓣 + 蓬松中心 + 棕色纽扣 */
+  function makeFlowerCushion(scl) {
     var g = new T.Group();
-    var n = 8;
-    for (var i = 0; i < n; i++) {
-      var a = i / n * Math.PI * 2;
-      var petal = new T.Mesh(new T.SphereGeometry(0.42, 12, 10), i % 2 ? M.cushionSoft : M.cushion);
-      petal.scale.set(1, 0.28, 0.6);
-      petal.position.set(Math.cos(a) * 0.52, 0.12, Math.sin(a) * 0.52);
+    var nOut = 10, nIn = 8;
+    // 外圈大花瓣
+    for (var i = 0; i < nOut; i++) {
+      var a = i / nOut * Math.PI * 2;
+      var petal = new T.Mesh(new T.SphereGeometry(0.34, 14, 10), i % 2 ? M.cushionSoft : M.cushion);
+      petal.scale.set(1.2, 0.3, 0.72);
+      petal.position.set(Math.cos(a) * 0.52, 0.1, Math.sin(a) * 0.52);
       petal.rotation.y = -a;
-      petal.castShadow = true;
+      petal.rotation.z = -Math.cos(a) * 0.14;
       g.add(petal);
     }
-    var center = new T.Mesh(new T.CylinderGeometry(0.46, 0.46, 0.2, 24), M.cushionDeep);
-    center.position.y = 0.12;
-    center.castShadow = true;
-    g.add(center);
-    var top2 = new T.Mesh(new T.CylinderGeometry(0.42, 0.42, 0.05, 24), M.seed);
-    top2.position.y = 0.23;
-    g.add(top2);
-    g.position.set(1.85, 0, -1.05);
-    room.add(g);
-  })();
+    // 内圈花瓣（错位、略高、颜色更亮）
+    for (var k = 0; k < nIn; k++) {
+      var a2 = (k + 0.5) / nIn * Math.PI * 2;
+      var p2 = new T.Mesh(new T.SphereGeometry(0.26, 12, 10), k % 2 ? M.petal : M.petalDeep);
+      p2.scale.set(1.12, 0.34, 0.7);
+      p2.position.set(Math.cos(a2) * 0.3, 0.17, Math.sin(a2) * 0.3);
+      p2.rotation.y = -a2;
+      g.add(p2);
+    }
+    // 蓬松中心
+    var dome = new T.Mesh(new T.SphereGeometry(0.4, 22, 14, 0, 6.283, 0, Math.PI / 2), M.cushionDeep);
+    dome.scale.set(1, 0.55, 1); dome.position.y = 0.12;
+    g.add(dome);
+    // 棕色纽扣 + 中心小鼓包
+    var btn = new T.Mesh(new T.CylinderGeometry(0.15, 0.15, 0.05, 18), M.seed);
+    btn.position.y = 0.335; g.add(btn);
+    var btnt = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), M.seed);
+    btnt.scale.y = 0.6; btnt.position.y = 0.375; g.add(btnt);
+    // 放射缝线
+    for (var s = 0; s < 10; s++) {
+      var aa = s / 10 * Math.PI * 2;
+      var seam = new T.Mesh(new T.BoxGeometry(0.016, 0.02, 0.22), M.seed);
+      seam.position.set(Math.cos(aa) * 0.12, 0.33, Math.sin(aa) * 0.12);
+      seam.rotation.y = -aa; seam.rotation.x = 0.05;
+      g.add(seam);
+    }
+    shadowAll(g);
+    g.scale.setScalar(scl || 1);
+    return g;
+  }
+
+  var _fc1 = makeFlowerCushion(1.0);
+  _fc1.position.set(0.55, 0, 2.5);
+  _fc1.rotation.y = 0.5;
+  room.add(_fc1);
+
+  var _fc2 = makeFlowerCushion(0.92);
+  _fc2.position.set(1.95, 0, -1.05);
+  _fc2.rotation.y = -0.35;
+  room.add(_fc2);
 
   /* =======================================================================
      17. 灯串（沿挂画墙 + 藤枝）
@@ -2081,23 +2283,7 @@
       room.add(b);
     }
 
-    // 地毯上的奶油色圆墩坐垫（Sky 风）
-    var pouf = new T.Group();
-    var pbody = new T.Mesh(new T.CylinderGeometry(0.47, 0.5, 0.24, 28), M.cushionPale);
-    pbody.position.y = 0.12; pbody.castShadow = true; pbody.receiveShadow = true;
-    pouf.add(pbody);
-    var ptop = new T.Mesh(new T.SphereGeometry(0.47, 24, 12, 0, 6.283, 0, Math.PI / 2), M.cushionPale);
-    ptop.scale.set(1, 0.55, 1); ptop.position.y = 0.24; ptop.castShadow = true;
-    pouf.add(ptop);
-    var ppipe = new T.Mesh(new T.TorusGeometry(0.485, 0.032, 8, 32), M.cushionSoft);
-    ppipe.rotation.x = Math.PI / 2; ppipe.position.y = 0.2;
-    pouf.add(ppipe);
-    var ptuft = new T.Mesh(new T.SphereGeometry(0.05, 12, 10), M.cushionSoft);
-    ptuft.scale.y = 0.6; ptuft.position.y = 0.4;
-    pouf.add(ptuft);
-    pouf.position.set(0.55, 0, 2.5);
-    shadowAll(pouf);
-    room.add(pouf);
+    // 地毯上的向日葵花瓣坐垫改由 makeFlowerCushion() 统一生成（见上方）
 
     /* 右石墙上的圆菇形搁板 ×2 */
     function roundShelf(y, z) {
@@ -2177,55 +2363,74 @@
      19b. 主角道具：大橙团抱枕 / 白瓷壶插花 / 姆明玩偶 / 向日葵床
      ======================================================================= */
   (function buildHeroProps() {
-    /* ---- 巨大的橙色团团（前左角） ---- */
+    /* ---- 巨大的黄色鸭鸭抱枕（前左角，参考截图里的趴地鸭） ---- */
     (function bigPlush() {
       var g = new T.Group();
-      var bodyMat = std(0xf2a03a, { roughness: 0.94 });
-      var bodyMat2 = std(0xe08a26, { roughness: 0.94 });
+      var bodyMat = std(0xf5b041, { roughness: 0.96 });
+      var bodyMat2 = std(0xe89a2c, { roughness: 0.96 });
+      var beakMat = std(0xe9771f, { roughness: 0.82 });
+      var eyeMat = std(0x1d1410, { roughness: 0.55 });
 
-      var body = new T.Mesh(new T.SphereGeometry(0.98, 30, 24), bodyMat);
-      body.scale.set(1.12, 0.96, 1.0);
-      body.position.y = 1.02;
+      // 趴着的身体（扁圆）
+      var body = new T.Mesh(new T.SphereGeometry(0.95, 30, 22), bodyMat);
+      body.scale.set(1.3, 0.68, 1.0);
+      body.position.y = 0.7;
       g.add(body);
 
-      // 奶油色肚皮
-      var belly = new T.Mesh(new T.SphereGeometry(0.72, 24, 18), std(0xf7e7c8, { roughness: 0.95 }));
-      belly.scale.set(1.0, 1.0, 0.4);
-      belly.position.set(0, 0.72, 0.7);
-      g.add(belly);
+      // 头部（前伸，露出脸）
+      var head = new T.Mesh(new T.SphereGeometry(0.6, 26, 20), bodyMat);
+      head.scale.set(1.0, 0.94, 1.0);
+      head.position.set(0, 0.9, 0.74);
+      g.add(head);
 
-      // 前面垂下来的两团圆
-      [[-0.86, 0.72, 0.62, 0.95], [0.9, 0.66, 0.55, 0.86]].forEach(function (q) {
-        var lump = new T.Mesh(new T.SphereGeometry(0.62, 20, 16), bodyMat2);
-        lump.scale.set(q[3], 0.92, 0.9);
-        lump.position.set(q[0], q[1], q[2]);
-        g.add(lump);
+      // 两侧翅膀（略深色、扁圆）
+      [-1, 1].forEach(function (sd) {
+        var wing = new T.Mesh(new T.SphereGeometry(0.52, 20, 16), bodyMat2);
+        wing.scale.set(0.5, 0.6, 1.0);
+        wing.position.set(sd * 1.0, 0.58, -0.12);
+        wing.rotation.z = sd * 0.16;
+        g.add(wing);
       });
 
-      // 小脚
+      // 橙色的扁喙
+      var beak = new T.Mesh(new T.SphereGeometry(0.19, 16, 12), beakMat);
+      beak.scale.set(1.6, 0.48, 0.95);
+      beak.position.set(0, 0.84, 1.3);
+      g.add(beak);
+      var beakLip = new T.Mesh(new T.BoxGeometry(0.4, 0.05, 0.16), std(0xc25a12, { roughness: 0.8 }));
+      beakLip.position.set(0, 0.79, 1.36);
+      beakLip.rotation.x = 0.12;
+      g.add(beakLip);
+
+      // 黑色菱形眼睛
       [-1, 1].forEach(function (sd) {
-        var foot = new T.Mesh(new T.SphereGeometry(0.34, 18, 14), bodyMat2);
-        foot.scale.set(1.2, 0.5, 1.3);
-        foot.position.set(sd * 0.62, 0.12, -0.72);
+        var eye = new T.Mesh(new T.BoxGeometry(0.15, 0.15, 0.06), eyeMat);
+        eye.position.set(sd * 0.3, 1.04, 1.2);
+        eye.rotation.z = Math.PI / 4;
+        g.add(eye);
+        var spark = new T.Mesh(new T.SphereGeometry(0.026, 8, 8), std(0xffffff, { roughness: 0.3 }));
+        spark.position.set(sd * 0.26, 1.08, 1.25);
+        g.add(spark);
+      });
+
+      // 小脚丫
+      [-1, 1].forEach(function (sd) {
+        var foot = new T.Mesh(new T.SphereGeometry(0.24, 16, 12), beakMat);
+        foot.scale.set(1.35, 0.42, 1.15);
+        foot.position.set(sd * 0.46, 0.1, 0.92);
         g.add(foot);
       });
 
-      // 眼睛：黑色小方眼
-      [-1, 1].forEach(function (sd) {
-        var eye = new T.Mesh(new T.BoxGeometry(0.13, 0.17, 0.05), std(0x241812, { roughness: 0.6 }));
-        eye.position.set(sd * 0.34, 0.99, 1.03);
-        eye.rotation.z = sd * 0.12;
-        g.add(eye);
-      });
-      // 橙色小嘴
-      var mouth = new T.Mesh(new T.SphereGeometry(0.13, 14, 10), std(0xe8902e, { roughness: 0.85 }));
-      mouth.scale.set(1.5, 0.78, 1.1);
-      mouth.position.set(0, 0.72, 1.1);
-      g.add(mouth);
+      // 小尾巴
+      var tail = new T.Mesh(new T.SphereGeometry(0.3, 16, 12), bodyMat2);
+      tail.scale.set(0.85, 0.7, 0.7);
+      tail.position.set(0, 0.62, -0.92);
+      g.add(tail);
 
       shadowAll(g);
+      g.scale.setScalar(0.92);
       g.position.set(-4.82, 0, 3.42);
-      g.rotation.y = 0.46;
+      g.rotation.y = 0.92;
       room.add(g);
     })();
 
@@ -2564,10 +2769,10 @@
         break;
 
       case 'blossom':
-        bgv('#b9cbd0', '#d6e0d8');
-        strokes(120, function () { return 'rgba(150,170,175,0.14)'; }, 6, 16, 2, 4);
+        bgv('#4f8079', '#7fa699');
+        strokes(140, function () { return 'rgba(120,150,140,0.16)'; }, 6, 16, 2, 4);
         // 枝
-        ctx.strokeStyle = '#7a5536'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.strokeStyle = '#4a3220'; ctx.lineWidth = 7; ctx.lineCap = 'round';
         function branch(x0, y0, x1, y1) {
           ctx.beginPath(); ctx.moveTo(x0, y0);
           ctx.quadraticCurveTo((x0 + x1) / 2 + rand(-20, 20), (y0 + y1) / 2, x1, y1);
@@ -2577,16 +2782,24 @@
         branch(w * 0.5, h * 0.42, w * 0.82, h * 0.25);
         branch(w * 0.5, h * 0.42, w * 0.6, h * 0.1);
         branch(w * 0.5, h * 0.42, w * 0.3, h * 0.22);
-        // 花
-        for (var fl = 0; fl < 40; fl++) {
-          var fx = rand(w * 0.12, w * 0.92), fy = rand(h * 0.06, h * 0.6);
-          ctx.fillStyle = 'rgba(255,248,240,' + rand(0.7, 1).toFixed(2) + ')';
+        // 细枝
+        ctx.strokeStyle = '#5a3e28'; ctx.lineWidth = 3;
+        for (var tw = 0; tw < 10; tw++) {
+          var bx = rand(w * 0.2, w * 0.85), by = rand(h * 0.12, h * 0.55);
+          ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + rand(-30, 30), by + rand(-24, 24)); ctx.stroke();
+        }
+        // 花（白 + 淡粉）
+        for (var fl = 0; fl < 54; fl++) {
+          var fx = rand(w * 0.1, w * 0.94), fy = rand(h * 0.04, h * 0.62);
+          var pinkish = fl % 4 === 0;
+          ctx.fillStyle = pinkish ? 'rgba(252,214,222,0.95)' : 'rgba(255,250,244,' + rand(0.8, 1).toFixed(2) + ')';
+          var pr = rand(3.5, 6);
           for (var pt = 0; pt < 5; pt++) {
             var fa = pt / 5 * 6.283;
-            ctx.beginPath(); ctx.ellipse(fx + Math.cos(fa) * 4, fy + Math.sin(fa) * 4, 3, 2, fa, 0, 6.283); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(fx + Math.cos(fa) * pr * 0.9, fy + Math.sin(fa) * pr * 0.9, pr * 0.75, pr * 0.5, fa, 0, 6.283); ctx.fill();
           }
-          ctx.fillStyle = '#e8c56a';
-          ctx.beginPath(); ctx.arc(fx, fy, 1.6, 0, 6.283); ctx.fill();
+          ctx.fillStyle = '#d9a63e';
+          ctx.beginPath(); ctx.arc(fx, fy, 2, 0, 6.283); ctx.fill();
         }
         break;
 

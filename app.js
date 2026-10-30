@@ -23,7 +23,7 @@
 
     items: [
       { id: 'sofa',   name: '沙发',   text: '这里永远留一个位置给你，<br/>坐多久都可以。' },
-      { id: 'gramo',  name: '唱片机', text: '同一首歌单曲循环了一整晚，<br/>还是想再听一遍。' },
+      { id: 'gramo',  name: '唱片机', text: '点我开始播放，<br/>今晚的歌，单曲循环。' },
       { id: 'cat',    name: '小猫',   text: '它守着这间屋子，<br/>也守着你。' },
       { id: 'gift',   name: '礼物盒', text: '先别急着拆，<br/>许个愿吧。' },
       { id: 'window', name: '窗',     text: '窗外的夜色，<br/>是今晚的第一份礼物。' },
@@ -3145,9 +3145,18 @@
   register(sofa, 'sofa');
   register(gramoObj.group, 'gramo', {
     react: function () {
-      gramoObj.record.userData.spin = 1;
-      tween(gramoObj.horn.rotation, 'x', 0.28, 1.2, 0.1);
-      Sound.chime(true);
+      var playing = Sound.musicPlaying();
+      if (playing) {
+        Sound.music(false);
+        gramoObj.record.userData.spin = 0;
+        this.text = '再点一下，<br/>接着把这首听完。';
+      } else {
+        if (!Sound.on) Sound.enable();          // 确保总音量已开
+        Sound.music(true);
+        gramoObj.record.userData.spin = 1;
+        tween(gramoObj.horn.rotation, 'x', 0.28, 1.2, 0.1);
+        this.text = '唱片转起来了，<br/>今晚的歌，单曲循环。';
+      }
     }
   });
   register(cat, 'cat', {
@@ -3535,6 +3544,92 @@
     ];
     var scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
 
+    var chordIdx = 0;
+    var chords = [
+      [174.61, 261.63, 329.63, 392.00],
+      [130.81, 196.00, 261.63, 329.63],
+      [146.83, 220.00, 293.66, 349.23],
+      [110.00, 164.81, 261.63, 329.63]
+    ];
+    var scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+
+    /* ===== 留声机旋律：八音盒风的八小节循环（WebAudio 合成，无外部素材） ===== */
+    var musicOn = false, musicTimer = null, musicStep = 0, musicGain = null;
+    // C 大调五声音阶 + 经过音，温和上行下行的摇篮曲式旋律（单位：Hz）
+    var melody = [
+      523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 392.00,
+      440.00, 523.25, 587.33, 440.00, 392.00, 523.25, 392.00, 293.66,
+      523.25, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25,
+      392.00, 440.00, 523.25, 392.00, 293.66, 392.00, 261.63, 196.00
+    ];
+    // 每步对应的低音（根音），营造和声进行
+    var bassLine = [
+      130.81, 130.81, 130.81, 130.81, 174.61, 174.61, 174.61, 174.61,
+      196.00, 196.00, 196.00, 196.00, 130.81, 130.81, 130.81, 130.81,
+      261.63, 261.63, 261.63, 261.63, 220.00, 220.00, 220.00, 220.00,
+      174.61, 174.61, 174.61, 174.61, 130.81, 130.81, 130.81, 98.00
+    ];
+
+    function note(freq, when, dur, vol, type, detune) {
+      var o = ctx.createOscillator();
+      o.type = type || 'triangle';
+      o.frequency.value = freq;
+      o.detune.value = detune || 0;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(vol, when + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      var lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = type === 'sine' ? 1400 : 3200;
+      o.connect(g); g.connect(lp); lp.connect(musicGain || master);
+      o.start(when); o.stop(when + dur + 0.05);
+    }
+
+    function scheduleMusicBar() {
+      if (!ctx || !musicOn) return;
+      var now = ctx.currentTime + 0.05;
+      var stepDur = 0.42;                       // 每步 ~0.42s，整圈 ~13.4s
+      for (var i = 0; i < 8; i++) {
+        var f = melody[(musicStep + i) % melody.length];
+        var t = now + i * stepDur;
+        // 主旋律（八音盒三角波，略带高频泛音）
+        note(f, t, stepDur * 1.7, 0.12, 'triangle', rand(-4, 4));
+        // 高八度回声（弱）
+        note(f * 2, t + 0.04, stepDur * 1.2, 0.035, 'sine', 0);
+        // 低音根音（每两步一个长音）
+        if (i % 2 === 0) {
+          var bf = bassLine[(musicStep + i) % bassLine.length];
+          note(bf, t, stepDur * 3.4, 0.07, 'sine', 0);
+        }
+      }
+      musicStep = (musicStep + 8) % melody.length;
+      musicTimer = setTimeout(scheduleMusicBar, stepDur * 8 * 1000 - 120);
+    }
+
+    function startMusic() {
+      if (!ensure()) return;
+      try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+      if (musicOn) return;
+      musicOn = true;
+      if (!musicGain) {
+        musicGain = ctx.createGain();
+        musicGain.gain.value = 0;
+        musicGain.connect(master);
+      }
+      musicGain.gain.cancelScheduledValues(ctx.currentTime);
+      musicGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.6);
+      musicStep = 0;
+      scheduleMusicBar();
+    }
+    function stopMusic() {
+      musicOn = false;
+      if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+      if (musicGain && ctx) {
+        musicGain.gain.cancelScheduledValues(ctx.currentTime);
+        musicGain.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
+      }
+    }
+
     function ensure() {
       if (ctx) return true;
       try {
@@ -3624,6 +3719,7 @@
       },
       disable: function () {
         on = false;
+        stopMusic();
         if (ctx) {
           master.gain.cancelScheduledValues(ctx.currentTime);
           master.gain.setTargetAtTime(0, ctx.currentTime, 0.4);
@@ -3637,7 +3733,9 @@
       toggle: function () { on ? Sound.disable() : Sound.enable(); },
       chime: function (big) { blip(big ? [880, 1174.66] : [659.25, 987.77], 0.09, 0.9); },
       page: function () { blip([420, 380], 0.05, 0.35); },
-      purr: function () { blip([110, 138], 0.045, 0.7); }
+      purr: function () { blip([110, 138], 0.045, 0.7); },
+      music: function (state) { state ? startMusic() : stopMusic(); },
+      musicPlaying: function () { return musicOn; }
     };
   })();
 
@@ -3813,6 +3911,7 @@
     trigger: function (id) { if (itemById[id]) triggerItem(itemById[id]); },
     finale: finale,
     count: function () { return found; },
+    musicPlaying: function () { return Sound.musicPlaying(); },
     scene: scene,
     room: room,
     stats: function () {

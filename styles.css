@@ -207,6 +207,9 @@ body {
   left: 50%;
   bottom: 96px;
   transform: translateX(-50%);
+  max-width: min(92vw, 560px);
+  text-align: center;
+  line-height: 1.55;
   font-size: 11px;
   letter-spacing: 0.2em;
   color: rgba(236, 216, 190, 0.55);

@@ -3318,9 +3318,17 @@
     cTheta: 1.58, cPhi: 0.64, cR: 54,
     tTheta: 1.17, tPhi: 1.45, tR: 22,
     minR: 8, maxR: 62,
-    minPhi: 0.52, maxPhi: 1.5,
-    minTheta: 0.72, maxTheta: 1.62
+    minPhi: 0.45, maxPhi: 1.55,
+    minTheta: 0.62, maxTheta: 1.72
   };
+  /* 可平移的注视点（视觉中心）：默认与房间重心一致；右键 / 双指拖动可把视觉中心移到阁楼等任意处，
+     缩放始终以该视觉中心为锚点，保证「缩放以视觉中心缩放」 */
+  var TARGET0 = TARGET.clone();
+  function clampTarget() {
+    TARGET.x = clamp(TARGET.x, -4.6, 3.6);
+    TARGET.y = clamp(TARGET.y, 0.5, 5.5);
+    TARGET.z = clamp(TARGET.z, -4.8, 4.2);
+  }
   var introT = 0;
   var swayT = 0, idleT = 99;
 
@@ -3365,9 +3373,22 @@
     camera.lookAt(TARGET);
   }
 
+  /* 平移视觉中心：按屏幕拖动量把注视点 TARGET 在相机平面内移动，使缩放 / 旋转都围绕该视觉中心 */
+  function panTarget(dxPx, dyPx) {
+    var fovV = camera.fov * Math.PI / 180;
+    var hgt = canvas.clientHeight || window.innerHeight || 600;
+    var worldPerPx = (2 * cam.cR * Math.tan(fovV / 2)) / hgt;
+    var dir = new T.Vector3().subVectors(TARGET, camera.position).normalize();
+    var right = new T.Vector3().crossVectors(dir, camera.up).normalize();
+    var up = new T.Vector3().crossVectors(right, dir).normalize();
+    TARGET.addScaledVector(right, -dxPx * worldPerPx);
+    TARGET.addScaledVector(up, dyPx * worldPerPx);
+    clampTarget();
+  }
+
   /* 指针 */
   var pointers = new Map();
-  var drag = { active: false, moved: 0, lastX: 0, lastY: 0, t0: 0, pinch: 0 };
+  var drag = { active: false, moved: 0, lastX: 0, lastY: 0, t0: 0, pinch: 0, mode: 'rotate', cx: 0, cy: 0 };
   var pointerNDC = new T.Vector2(0, 0);
   var tooltipScreen = { x: 0, y: 0 };
   var hasPointer = false;
@@ -3389,10 +3410,14 @@
       drag.active = true; drag.moved = 0;
       drag.lastX = e.clientX; drag.lastY = e.clientY;
       drag.t0 = performance.now();
+      // 右键 / 中键 / Shift+左键 = 平移视觉中心（用于把视角对准阁楼）；普通左键 = 旋转观察
+      drag.mode = (e.button === 2 || e.button === 1 || e.shiftKey) ? 'pan' : 'rotate';
       canvas.classList.add('grabbing');
     } else if (pointers.size === 2) {
       var arr = Array.from(pointers.values());
       drag.pinch = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+      drag.cx = (arr[0].x + arr[1].x) / 2;
+      drag.cy = (arr[0].y + arr[1].y) / 2;
       drag.active = false;
     }
     idleT = 0;
@@ -3409,18 +3434,29 @@
       var dy = e.clientY - drag.lastY;
       drag.lastX = e.clientX; drag.lastY = e.clientY;
       drag.moved += Math.abs(dx) + Math.abs(dy);
-      cam.tTheta = clamp(cam.tTheta - dx * 0.0062, cam.minTheta, cam.maxTheta);
-      cam.tPhi = clamp(cam.tPhi - dy * 0.0048, cam.minPhi, cam.maxPhi);
-      cam.cTheta = cam.tTheta; cam.cPhi = cam.tPhi;
+      if (drag.mode === 'pan') {
+        panTarget(dx, dy);
+      } else {
+        cam.tTheta = clamp(cam.tTheta - dx * 0.0062, cam.minTheta, cam.maxTheta);
+        cam.tPhi = clamp(cam.tPhi - dy * 0.0048, cam.minPhi, cam.maxPhi);
+        cam.cTheta = cam.tTheta; cam.cPhi = cam.tPhi;
+      }
       hideTooltip();
     } else if (pointers.size === 2) {
       var arr = Array.from(pointers.values());
       var d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+      var cx = (arr[0].x + arr[1].x) / 2;
+      var cy = (arr[0].y + arr[1].y) / 2;
       if (drag.pinch > 0) {
+        // 双指捏合：以视觉中心为锚点缩放
         cam.tR = clamp(cam.tR * (drag.pinch / d), cam.minR, cam.maxR);
         cam.cR = cam.tR;
       }
-      drag.pinch = d;
+      if (drag.cx !== undefined) {
+        // 双指整体平移：移动视觉中心
+        panTarget(cx - drag.cx, cy - drag.cy);
+      }
+      drag.pinch = d; drag.cx = cx; drag.cy = cy;
     }
   }
 
@@ -3429,11 +3465,12 @@
     canvas.classList.remove('grabbing');
     if (pointers.size === 0) {
       var quick = performance.now() - drag.t0 < 420;
-      if (drag.active && drag.moved < 7 && quick) tryPick(e);
-      drag.active = false; drag.pinch = 0;
+      // 仅普通旋转拖动的轻点才触发拾取；平移拖动不误触
+      if (drag.active && drag.moved < 7 && quick && drag.mode === 'rotate') tryPick(e);
+      drag.active = false; drag.pinch = 0; drag.mode = 'rotate';
     } else if (pointers.size === 1) {
       var rest = Array.from(pointers.values())[0];
-      drag.lastX = rest.x; drag.lastY = rest.y; drag.active = true;
+      drag.lastX = rest.x; drag.lastY = rest.y; drag.active = true; drag.mode = 'rotate';
     }
   }
 
@@ -4190,6 +4227,7 @@
     gramoObj.record.userData.spin = 0;
     cam.tTheta = 0.82;
     cam.tPhi = 1.0;
+    TARGET.copy(TARGET0);
   });
 
   /* =======================================================================
@@ -4301,6 +4339,7 @@
   document.getElementById('btn-reset').addEventListener('click', function () {
     cam.tTheta = 0.82;
     cam.tPhi = 1.0;
+    TARGET.copy(TARGET0);
     fitCamera();
     idleT = 0;
   });
@@ -4314,6 +4353,13 @@
   var veil = document.getElementById('veil');
   var sceneHint = document.getElementById('scene-hint');
   var hoverTick = 0;
+
+  /* 操作提示按设备区分：触屏没有右键，用双指平移；桌面提示右键拖动平移观察阁楼 */
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    sceneHint.textContent = '拖动旋转 · 双指缩放 / 平移 · 点击物件';
+  } else {
+    sceneHint.textContent = '拖动旋转 · 滚轮缩放 · 右键拖动平移看阁楼 · 点击物件';
+  }
 
   window.addEventListener('resize', fitCamera);
   window.addEventListener('orientationchange', function () { setTimeout(fitCamera, 260); });
@@ -4498,6 +4544,9 @@
     scene: scene,
     room: room,
     camera: camera,
+    target: function () { return [+TARGET.x.toFixed(3), +TARGET.y.toFixed(3), +TARGET.z.toFixed(3)]; },
+    cam: function () { return { tTheta: cam.tTheta, tPhi: cam.tPhi, tR: cam.tR, cR: cam.cR, minR: cam.minR, maxR: cam.maxR, minTheta: cam.minTheta, maxTheta: cam.maxTheta, minPhi: cam.minPhi, maxPhi: cam.maxPhi }; },
+    panTo: function (x, y, z) { TARGET.set(x, y, z); clampTarget(); },
     pickables: function () { return pickables; },
     stats: function () {
       var meshes = 0, groups = 0;

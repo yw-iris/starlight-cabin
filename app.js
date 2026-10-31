@@ -67,8 +67,12 @@
     cafe:      { title: '夜间咖啡馆',   series: '亮着的窗',  ar: 1.35, desc: '街角那盏灯一直亮着，为每一个夜归的人，留一截可以歇脚的光。' }
   };
 
-  /* 画作详情页里展示的照片集（《光·遇》双人记录）。点任意墙画进入同一本相册，可逐张翻看 */
-  var ART_PHOTOS = [
+  /* 画作详情页里的照片集（《光·遇》双人记录），按主题分成五个相簿。
+     点任意墙画进入，先落在最近看过的位置，可在相簿之间切换、逐张翻看 */
+  var ART_ALBUMS = [
+    {
+      key: 'daily', name: '光遇日常', numeral: '一', note: '冬 × 许愿 · 从相遇到雪落',
+      photos: [
     { f: '1',  title: '月蚀',   desc: '月亮缺了一角，我们刚好都在。' },
     { f: '2',  title: '双影',   desc: '两件斗篷挨着，风也放轻了脚步。' },
     { f: '3',  title: '光鸟',   desc: '蓝洞里飞起的白鸟，替我们说了谢谢。' },
@@ -86,8 +90,79 @@
     { f: '15', title: '烟火树', desc: '整棵树都亮了，像一场不会散的烟火。' },
     { f: '16', title: '月下',   desc: '月亮很圆，我们很近。' },
     { f: '17', title: '雪国',   desc: '雪落满城，你在我旁边。' }
+      ]
+    },
+    {
+      key: 'home', name: '归处', numeral: '二', note: '灯亮着，被角是暖的',
+      photos: [
+    { f: '22', title: '烛灯',     desc: '你说早点睡，却先替我把被角掖好。' },
+    { f: '23', title: '枕边',     desc: '灯芯晃了一下，两个影子叠在一起。' },
+    { f: '24', title: '夜话',     desc: '天花板很低，话可以很长。' },
+    { f: '29', title: '面包房',   desc: '炉子还热着，我们各占一张凳子。' },
+    { f: '39', title: '蓝房间',   desc: '窗外的雪没停，画里的花先开了。' },
+    { f: '48', title: '窗光',     desc: '一整面墙的橙，刚好够抱住一个人。' },
+    { f: '50', title: '彩窗琴房', desc: '光从格子里漏下来，落在琴盖上。' },
+    { f: '53', title: '炉边',     desc: '火在烧，你在我肩头打盹。' }
+      ]
+    },
+    {
+      key: 'roam', name: '远行', numeral: '三', note: '云、山、花，还有一路的风',
+      photos: [
+    { f: '20', title: '风起',   desc: '披风撑满了风，还是两个人一起走。' },
+    { f: '25', title: '云顶',   desc: '举高一点，好像就能摸到那道天光。' },
+    { f: '26', title: '花期',   desc: '旗子哗哗响，粉花开满了整座山。' },
+    { f: '27', title: '白披风', desc: '路很长，白色在后面飘成一朵云。' },
+    { f: '34', title: '紫谷',   desc: '花一直开到山脚，风一吹就成了雾。' },
+    { f: '35', title: '金光',   desc: '云被晒成金色的时候，我们刚好回头。' },
+    { f: '36', title: '云上',   desc: '站在云边，脚下全是软的。' },
+    { f: '40', title: '飞鸟',   desc: '鸟群从山谷升起来，我们没舍得走。' },
+    { f: '44', title: '暮紫',   desc: '天边最后一点光，落在你侧脸上。' },
+    { f: '46', title: '帽子',   desc: '借你的帽子戴一下，笑到直不起腰。' },
+    { f: '49', title: '雪地',   desc: '雪面反着光，影子被拉得很长。' },
+    { f: '51', title: '海堡',   desc: '从高塔往下看，海一直铺到天边。' }
+      ]
+    },
+    {
+      key: 'gate', name: '门与洞', numeral: '四', note: '光总从某个洞口漏进来',
+      photos: [
+    { f: '19', title: '红岩', desc: '洞外一片白光，洞里只有你肩上的温度。' },
+    { f: '21', title: '门里', desc: '石框把外面的粉天，框成一幅画。' },
+    { f: '28', title: '回廊', desc: '石柱一路排到尽头，光在中间等我们。' },
+    { f: '47', title: '星孔', desc: '洞口是一枚十字，星星从那儿漏进来。' }
+      ]
+    },
+    {
+      key: 'night', name: '星夜', numeral: '五', note: '夜很长，我们都不急着走',
+      photos: [
+    { f: '18', title: '雪夜琴',   desc: '雪把声音压低，只剩这一小段旋律。' },
+    { f: '30', title: '萤草',     desc: '草尖上全是光，像有人替我们撒了一把星。' },
+    { f: '31', title: '夜田',     desc: '远处的窗还亮着，我们踩着光走。' },
+    { f: '32', title: '星墙',     desc: '靠在这面墙上，星星离得很近。' },
+    { f: '33', title: '橙夜',     desc: '红光把脸照亮，夜就不算冷了。' },
+    { f: '37', title: '共读',     desc: '一本书两个人看，翻页要商量。' },
+    { f: '38', title: '日蚀',     desc: '月亮把太阳遮住，世界安静了几秒。' },
+    { f: '41', title: '冰原',     desc: '冰面照出两盏光，像多了一个我们。' },
+    { f: '42', title: '仰头',     desc: '抬头看天，披风把光都兜住了。' },
+    { f: '43', title: '光落',     desc: '光从上面落下来，正好落在肩上。' },
+    { f: '45', title: '蓝谷',     desc: '山谷把光收成一条线，我们站在线尽头。' },
+    { f: '52', title: '坐在光里', desc: '日蚀还没结束，我们没打算起身。' },
+    { f: '54', title: '书与光环', desc: '身后的光环亮着，书页刚好翻到中间。' },
+    { f: '55', title: '石凳',     desc: '月亮很圆，凳子刚好坐两个人。' }
+      ]
+    }
   ];
-  var ART_PHOTO_SERIES = '冬 × 许愿';
+
+  /* 摊平成单一序列，同时给每张照片记下所属相簿与相簿内序号 */
+  var ART_PHOTOS = [];
+  ART_ALBUMS.forEach(function (al, ai) {
+    al.start = ART_PHOTOS.length;
+    al.count = al.photos.length;
+    al.photos.forEach(function (p, pi) {
+      p.al = ai;
+      p.pi = pi;
+      ART_PHOTOS.push(p);
+    });
+  });
 
   /* =======================================================================
      1. 几何工具
@@ -3582,16 +3657,65 @@
   var artDetailOpen = false;
   var artCurrentIndex = -1;
   var artThumbsEl = document.getElementById('art-detail-thumbs');
-  var artThumbsBuilt = false;
+  var artTabsEl = document.getElementById('art-detail-albums');
+  var artThumbsBuiltFor = -1;
+  var artAlbum = 0;              // 当前相簿
+  var artCurrentIndex = -1;      // 全局序号（跨相簿）
 
-  function buildArtThumbs() {
-    if (artThumbsBuilt || !artThumbsEl) return;
-    ART_PHOTOS.forEach(function (p, i) {
+  function artInAlbum() {
+    var al = ART_ALBUMS[artAlbum];
+    return al ? artCurrentIndex - al.start : 0;
+  }
+
+  /* 相簿切换标签：一 · 光遇日常 17 / 二 · 归处 8 … */
+  function buildArtTabs() {
+    if (!artTabsEl || artTabsEl.children.length) return;
+    ART_ALBUMS.forEach(function (al, ai) {
+      var tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'art-album-tab';
+      tab.dataset.album = ai;
+      tab.setAttribute('role', 'tab');
+      tab.innerHTML = '<span class="art-album-num">' + al.numeral + '</span>' +
+                      '<span class="art-album-name">' + al.name + '</span>' +
+                      '<span class="art-album-count">' + al.count + '</span>';
+      tab.addEventListener('click', function (e) {
+        e.stopPropagation();
+        artRender(ai, 0);
+      });
+      artTabsEl.appendChild(tab);
+    });
+  }
+
+  function markArtTab() {
+    if (!artTabsEl) return;
+    var tabs = artTabsEl.children;
+    for (var i = 0; i < tabs.length; i++) {
+      var on = (i === artAlbum);
+      tabs[i].classList.toggle('active', on);
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on && artTabsEl.scrollWidth > artTabsEl.clientWidth + 2) {
+        // 窄屏标签条是横向滚动的，把当前相簿滑到中间
+        var t = tabs[i];
+        var left = t.offsetLeft - (artTabsEl.clientWidth - t.offsetWidth) / 2;
+        artTabsEl.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+      }
+    }
+  }
+
+  /* 缩略图只铺当前相簿的，切相簿时重铺 */
+  function buildArtThumbs(albumIdx) {
+    if (!artThumbsEl) return;
+    if (artThumbsBuiltFor === albumIdx) return;
+    var al = ART_ALBUMS[albumIdx];
+    if (!al) return;
+    artThumbsEl.innerHTML = '';
+    al.photos.forEach(function (p, pi) {
       var cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'art-thumb';
       cell.setAttribute('role', 'option');
-      cell.dataset.index = i;
+      cell.dataset.index = pi;
       var img = document.createElement('img');
       img.className = 'art-thumb-photo';
       img.src = 'photos/thumb/' + p.f + '.jpg';
@@ -3603,39 +3727,46 @@
       cell.appendChild(label);
       cell.addEventListener('click', function (e) {
         e.stopPropagation();
-        artRenderAt(i);
+        artRender(albumIdx, pi);
       });
       artThumbsEl.appendChild(cell);
     });
-    artThumbsBuilt = true;
+    artThumbsBuiltFor = albumIdx;
   }
 
   function markArtThumb() {
     if (!artThumbsEl) return;
     var cells = artThumbsEl.children;
+    var cur = artInAlbum();
     for (var i = 0; i < cells.length; i++) {
-      var active = (i === artCurrentIndex);
+      var active = (i === cur);
       cells[i].classList.toggle('active', active);
       if (active) {
-        // 滚动到可视区域（居中）
-        cells[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        // 只横向滚动缩略图条，避免把整个面板一起滚上去（相簿标签会跑出视野）
+        var c = cells[i];
+        var left = c.offsetLeft - (artThumbsEl.clientWidth - c.offsetWidth) / 2;
+        artThumbsEl.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
       }
     }
   }
 
-  function artRenderAt(index) {
-    if (!ART_PHOTOS.length) return;
-    var total = ART_PHOTOS.length;
-    index = (index + total) % total;   // 循环浏览
-    artCurrentIndex = index;
-    var p = ART_PHOTOS[index];
+  /* 渲染某一相簿的第 i 张；i 在相簿内循环 */
+  function artRender(albumIdx, i) {
+    var al = ART_ALBUMS[albumIdx];
+    if (!al || !al.count) return;
+    i = ((i % al.count) + al.count) % al.count;
+    artAlbum = albumIdx;
+    artCurrentIndex = al.start + i;
+    var p = al.photos[i];
+
     if (artPhoto) {
       var big = 'photos/' + p.f + '.jpg';
       artPhoto.dataset.big = big;
+      artPhoto.dataset.ready = '';
       artPhoto.alt = p.title;
       // 先用已加载的小缩略图占位（秒开），大图加载完成后再无缝替换
       artPhoto.src = 'photos/thumb/' + p.f + '.jpg';
-      var token = index;
+      var token = artCurrentIndex;
       var pre = new Image();
       pre.onload = function () {
         if (artCurrentIndex === token && artPhoto) {
@@ -3647,16 +3778,36 @@
     }
 
     artTitleEl.textContent = p.title;
-    artSeriesEl.textContent = '· ' + ART_PHOTO_SERIES + ' ·';
+    artSeriesEl.textContent = '· 相簿' + al.numeral + ' · ' + al.name + ' —— ' + al.note + ' ·';
     artDescEl.textContent = p.desc;
-    if (artCounterEl) artCounterEl.textContent = '第 ' + (index + 1) + ' / ' + total + ' 张';
+    if (artCounterEl) artCounterEl.textContent = '第 ' + (i + 1) + ' / ' + al.count + ' 张';
+    buildArtThumbs(albumIdx);
+    markArtTab();
     markArtThumb();
     if (Sound.on) Sound.page();
   }
 
+  /* 兼容旧调用：按全局序号定位 */
+  function artRenderAt(index) {
+    if (!ART_PHOTOS.length) return;
+    var total = ART_PHOTOS.length;
+    index = ((index % total) + total) % total;
+    var p = ART_PHOTOS[index];
+    artRender(p.al, p.pi);
+  }
+
+  /* 换相簿：dir=+1/-1 顺序切换（到端循环） */
+  function artAlbumStep(dir) {
+    var n = ART_ALBUMS.length;
+    if (!n) return;
+    artRender(((artAlbum + (dir || 1)) % n + n) % n, 0);
+  }
+
   function openArtDetail(kind) {
-    buildArtThumbs();
-    artRenderAt(0);
+    buildArtTabs();
+    // 回到上次看的位置；第一次打开从头开始
+    if (artCurrentIndex < 0) artRender(0, 0);
+    else artRender(artAlbum, artInAlbum());
 
     artDetailEl.classList.add('show');
     artDetailEl.setAttribute('aria-hidden', 'false');
@@ -3678,17 +3829,19 @@
     });
     if (artPrevBtn) artPrevBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      artRenderAt(artCurrentIndex - 1);
+      artRender(artAlbum, artInAlbum() - 1);
     });
     if (artNextBtn) artNextBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      artRenderAt(artCurrentIndex + 1);
+      artRender(artAlbum, artInAlbum() + 1);
     });
     document.addEventListener('keydown', function (e) {
       if (!artDetailOpen) return;
       if (e.key === 'Escape') closeArtDetail();
-      else if (e.key === 'ArrowLeft') artRenderAt(artCurrentIndex - 1);
-      else if (e.key === 'ArrowRight') artRenderAt(artCurrentIndex + 1);
+      else if (e.key === 'ArrowLeft') artRender(artAlbum, artInAlbum() - 1);
+      else if (e.key === 'ArrowRight') artRender(artAlbum, artInAlbum() + 1);
+      else if (e.key === 'ArrowUp') { e.preventDefault(); artAlbumStep(-1); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); artAlbumStep(1); }
     });
   }
 
@@ -4517,7 +4670,18 @@
     artPhotoSrc: function () { return artPhoto ? (artPhoto.dataset.big || artPhoto.getAttribute('src')) : null; },
     artPhotoReady: function () { return !!(artPhoto && artPhoto.dataset.ready === '1'); },
     artIndex: function () { return artCurrentIndex; },
-    artNav: function (delta) { artRenderAt(artCurrentIndex + (delta || 1)); },
+    artNav: function (delta) { artRender(artAlbum, artInAlbum() + (delta || 1)); },
+    artAlbumCount: function () { return ART_ALBUMS.length; },
+    artAlbumIndex: function () { return artAlbum; },
+    artAlbumInfo: function () {
+      return ART_ALBUMS.map(function (a) {
+        return { key: a.key, name: a.name, numeral: a.numeral, count: a.count };
+      });
+    },
+    artAlbumName: function () { return ART_ALBUMS[artAlbum] ? ART_ALBUMS[artAlbum].name : null; },
+    artAlbumSwitch: function (i) { artRender(i || 0, 0); },
+    artAlbumStep: function (dir) { artAlbumStep(dir); },
+    artInAlbum: function () { return artInAlbum(); },
     openCommission: function () { openCommission(); },
     closeCommission: function () { closeCommission(); },
     commissionOpen: function () { return !!(commissionEl && commissionEl.classList.contains('show')); },

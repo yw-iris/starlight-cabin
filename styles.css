@@ -357,6 +357,48 @@ body {
   transition: background .25s ease, color .25s ease;
 }
 .art-detail-close:hover { background: rgba(60, 38, 18, 0.88); color: #fff2dd; }
+/* 相簿切换（五个小标签，当前相簿高亮）；面板内滚动时吸附在顶部 */
+.art-detail-albums {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: min(92vw, 700px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(18, 11, 6, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.art-album-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 225, 180, 0.22);
+  background: rgba(28, 18, 9, 0.55);
+  color: rgba(240, 224, 202, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease, border-color .25s ease;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.art-album-tab:hover { color: #ffeccf; border-color: rgba(255, 225, 180, 0.42); }
+.art-album-tab.active {
+  color: #2a1a0b;
+  background: linear-gradient(160deg, #f0cf9a, #d7a45f);
+  border-color: rgba(255, 240, 210, 0.6);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.8);
+}
+.art-album-num { font-family: var(--serif); font-size: 13px; }
+.art-album-count { font-size: 10px; opacity: 0.62; letter-spacing: 0; }
+.art-album-tab.active .art-album-count { opacity: 0.72; }
 .art-detail-meta { text-align: center; max-width: 560px; }
 .art-detail-series {
   font-size: 11px;
@@ -386,6 +428,20 @@ body {
   font-size: 11px;
   letter-spacing: 0.18em;
   color: rgba(236, 216, 190, 0.4);
+}
+/* 屏幕高度有限时收紧一点，保证相簿标签 + 大图 + 缩略图一屏看全 */
+@media (max-height: 980px) {
+  .art-detail-panel { gap: 12px; padding: 16px; }
+  .art-detail-frame { padding: 10px; }
+  .art-detail-frame img { height: min(44vh, 340px); }
+  .art-detail-series { margin-bottom: 6px; }
+  .art-detail-title { font-size: clamp(21px, 3.2vw, 28px); margin-bottom: 8px; }
+  .art-thumb-photo { width: 74px; height: 50px; }
+  .art-detail-tip { display: none; }
+}
+@media (max-height: 700px) {
+  .art-detail-frame img { height: min(38vh, 260px); }
+  .art-detail-desc { display: none; }
 }
 .art-detail-nav {
   display: flex;
@@ -792,6 +848,11 @@ body {
   .art-detail-thumbs { max-width: 92vw; }
   .art-thumb-photo { width: 68px; height: 46px; }
   .art-thumb-label { font-size: 10px; }
+  .art-detail-albums { gap: 6px; max-width: 92vw; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
+  .art-detail-albums::-webkit-scrollbar { display: none; }
+  .art-album-tab { padding: 6px 10px; font-size: 11px; letter-spacing: 0.06em; flex: 0 0 auto; }
+  .art-album-num { font-size: 12px; }
+  .art-album-count { font-size: 9px; }
 }
 
 /* =================== 桌上的书 · 互相写的信 =================== */

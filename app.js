@@ -2044,7 +2044,7 @@
     g.scale.setScalar(0.8);
     shadowAll(g);
     room.add(g);
-    registerArt(g, 'landscape');   // 画架上的画作也可点击查看详情
+    registerCommission(g, '画架上的画');   // 画架上的画：点击打开「和你的约稿」作品页
 
     /* 旁边斜靠一块未装框的画布（参考石拱龛照片） */
     var leanCanvas = new T.Group();
@@ -2060,9 +2060,7 @@
     leanCanvas.rotation.set(-0.62, 0.16, 0.02);
     shadowAll(leanCanvas);
     room.add(leanCanvas);
-
-    /* 立着的画板（倚墙画布）：点击打开「和你的约稿」专属作品页 */
-    registerCommission(leanCanvas, '画板');
+    /* 立着的画板（倚墙画布）：仅作场景摆件，不响应点击、不弹任何页面 */
   })();
 
   /* 向日葵花瓣坐垫（参考石拱龛照片里的地垫）：双层花瓣 + 蓬松中心 + 棕色纽扣 */

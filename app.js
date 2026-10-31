@@ -3735,7 +3735,7 @@
   }
 
   /* -----------------------------------------------------------------------
-     24d. 「礼物盒」作品集（十一张约稿卡面，瀑布流相册 + 放大翻页）
+     24d. 「礼物盒」作品集（十三张约稿卡面，瀑布流相册 + 放大翻页）
      ======================================================================= */
   var GIFT_WORKS = [
     { f: '1',  name: '独钓寒江雪', note: '枝条新日 · 冬 × 许愿' },
@@ -3748,7 +3748,9 @@
     { f: '8',  name: '雾绕空山',   note: 'Fog Surrounds the Mountain' },
     { f: '9',  name: '艺术故事',   note: '街灯与窗 · 黑胶夜' },
     { f: '10', name: '你',         note: '终之下，我站起来' },
-    { f: '11', name: '如果时间只是人为停止', note: 'if Time is only artificially stopped' }
+    { f: '11', name: '如果时间只是人为停止', note: 'if Time is only artificially stopped' },
+    { f: '12', name: '限定发行',   note: '素雪 club 书行 · 十月刊' },
+    { f: '13', name: 'TOWARDS LIMITLESS', note: '冬 × 许愿 · 限定小卡 3/5' }
   ];
 
   var giftEl = document.getElementById('gift');

@@ -3134,7 +3134,9 @@
     wrap.userData = {
       id: id, name: cfg.name, text: cfg.text, found: false, hover: 1,
       react: extra && extra.react ? extra.react : null,
-      giftPage: !!(extra && extra.giftPage)
+      giftPage: !!(extra && extra.giftPage),
+      letterPage: !!(extra && extra.letterPage),
+      hint: extra && extra.hint ? extra.hint : null
     };
     pickables.push(wrap);
     itemById[id] = wrap;
@@ -3247,6 +3249,8 @@
     }
   });
   register(tableObj.book, 'book', {
+    letterPage: true,
+    hint: '点我读信',
     react: function () {
       tween(tableObj.book.rotation, 'y', tableObj.book.rotation.y + 0.55, 0.7, 0.05);
       Sound.page();
@@ -3861,8 +3865,168 @@
     });
   }
 
+  /* -----------------------------------------------------------------------
+     24e. 桌上的书 ·「互相写的信」（五封往来，可翻页）
+     ======================================================================= */
+  var LETTERS = [
+    {
+      no: '第 一 封',
+      orn: '— 以爱寻影　终开雾山 —',
+      blocks: [
+        { who: '许愿', kind: '来信', text: '你弹琴很好听，可是我是牛，还有可以不要坐在草上吗，那个我还要吃的' },
+        { who: '冬',   kind: '回信', text: '这个许愿就这样装疯卖傻，我捡走了。ok啊，我想想怎么回' }
+      ],
+      tail: '感谢板板七夕返场日冠'
+    },
+    {
+      no: '第 二 封',
+      orn: '— 以爱寻影　终开雾山 —',
+      blocks: [
+        { who: '冬',   kind: '来信', text: '生活反复捶打使我恋爱压抑' },
+        { who: '许愿', kind: '回信', text: '秀色可餐肉质紧实我吃之' }
+      ],
+      tail: '感谢板板日冠'
+    },
+    {
+      no: '第 三 封',
+      orn: '— 以爱寻影　终开雾山 —',
+      blocks: [
+        { who: '许愿', kind: '来信', text: '视奸完毕，没异常，但你有点太受欢迎了。除了我你还有别的朋友？跟她们绝交吧，有我就够了。' },
+        { who: '冬',   kind: '回信', text: '怎么变成阴湿女鬼了，多晒晒太阳' },
+        { who: '许愿', kind: '又来信', text: '你陪我就去' }
+      ],
+      tail: '感谢板板日冠'
+    },
+    {
+      no: '第 四 封',
+      orn: '— 以爱寻影　终开雾山 —',
+      blocks: [
+        { who: '冬', kind: '来信', text: '虽然我现在现实真的很忙然后压力也很大，但是很高兴遇见许愿老师。许愿老师这里是我忙碌之余难得能感到安心和放松的栖所。我总觉得爱的表达方式需要是多样的，于是一直很想送你些什么。但我说的那些你又说太贵重了。如果可以的话，给我一个你最能接受的形式吧。' },
+        { who: '许愿', kind: '回信', text: '我一直都希望自己能够接住你，想要为你做的再多一点，听你讲今天好忙，夸你好厉害，见面的时候说想你，你靠着我的时候我也有了一处安心。真想送我礼物就把双手伸过来，我绑个蝴蝶结把这人领走了。' }
+      ],
+      tail: '感谢板板日冠'
+    },
+    {
+      no: '第 五 封',
+      orn: '— 以爱寻影　终开雾山 —',
+      mono: 'NO4 ▸ +*以爱寻影，终开雾山*+\n' +
+            'ing!\n' +
+            '—✧—₊—*CRAZY*—₊—✧—\n' +
+            '▼_WU SHANG YING_▼\n' +
+            '╰( …『冬』∞『许愿』… )╯\n' +
+            '小周冠！——START!',
+      blocks: [
+        { who: '冬', kind: '来信', text: '在这个人人都是不同程度的天才的学校里，紧张和焦虑的情绪总是如影随形。我生活中的痛苦，是那样琐碎而刺痛的。于是在我向喜欢的方向努力的时候，总是会突然崩溃。但你总是能很好的接住我，用你的方式来爱我。现在我终于有机会在我喜欢的方向的科研训练上起步。太阳能电池吗，我生命中已经拥有一个小太阳了。我们细水长流好不好' },
+        { who: '许愿', kind: '回信！', text: '在这样的环境下不紧张和焦虑才是奇怪的吧，常常担心也是因为你有解决问题的能力。再厉害的人也有想发呆的时候，人人都是天才那我们做一颗白菜吧，感觉水灵灵的很好吃。你可以语无伦次可以沉默可以靠在我身上，我会去听你讲陪着你　去接住你疲惫的重量，额头抵着额头，闭上眼睛世界好像只有就我们两个人了。细水长流，你也长流，我也长流' }
+      ],
+      heart: true,
+      tail: '☆何止 ☁今昔☆　·　I.★ Wu Shan Ying ★.l'
+    }
+  ];
+
+  var lettersEl = document.getElementById('letters');
+  var lettersPage = document.getElementById('letters-page');
+  var lettersScroll = document.getElementById('letters-scroll');
+  var lettersCounter = document.getElementById('letters-counter');
+  var lettersPrev = document.getElementById('letters-prev');
+  var lettersNext = document.getElementById('letters-next');
+  var lettersIndex = 0;
+
+  function lettersIsOpen() { return !!(lettersEl && lettersEl.classList.contains('show')); }
+
+  /* 点阵心（第五封结尾的手绘小爱心） */
+  function heartDots() {
+    return '<svg class="let-heart" viewBox="0 0 24 22" fill="none" stroke="rgba(150,84,72,0.58)"' +
+           ' stroke-width="0.5" stroke-linecap="round" stroke-dasharray="0.001 1.28" aria-hidden="true">' +
+           '<path d="M12 20.2s-7.4-4.4-9.6-8.9C0.7 7.7 2.7 4 6.3 4c2.2 0 3.9 1.3 5.7 3.4C13.8 5.3 15.5 4 17.7 4c3.6 0 5.6 3.7 3.9 7.3-2.2 4.5-9.6 8.9-9.6 8.9z"/>' +
+           '</svg>';
+  }
+
+  function renderLetter(i) {
+    if (!lettersPage) return;
+    var n = LETTERS.length;
+    lettersIndex = ((i % n) + n) % n;
+    var L = LETTERS[lettersIndex];
+
+    var html = '<div class="let-eyebrow">互 相 写 的 信</div>';
+    html += '<div class="let-orn">' + L.orn + '</div>';
+    html += '<div class="let-orn-sub">☁ | Mist Mountain Shadow °</div>';
+    if (L.mono) html += '<div class="let-mono">' + L.mono + '</div>';
+    html += '<div class="let-orn-line">【雾山影】</div>';
+    html += '<div class="let-no">' + L.no + '</div>';
+
+    L.blocks.forEach(function (b) {
+      var winter = b.who === '冬';
+      html += '<div class="let-block ' + (winter ? 'winter' : 'wish') + '">' +
+              '<div class="let-who"><span class="let-seal">' + (winter ? '冬' : '愿') + '</span>' +
+              '<em>' + b.who + ' · ' + b.kind + '</em></div>' +
+              '<p class="let-text">' + b.text + '</p></div>';
+    });
+
+    if (L.heart) html += heartDots();
+    html += '<div class="let-sign">『冬』 &amp; 『许愿』</div>';
+    html += '<div class="let-end">— ' + L.tail + ' —　·　祝小宝玩的开心…</div>';
+
+    lettersPage.innerHTML = html;
+    lettersPage.classList.remove('turning');
+    void lettersPage.offsetWidth;
+    lettersPage.classList.add('turning');
+
+    if (lettersScroll) lettersScroll.scrollTop = 0;
+    if (lettersCounter) lettersCounter.textContent = '第 ' + (lettersIndex + 1) + ' 封 · 共 ' + n + ' 封';
+    if (lettersPrev) lettersPrev.disabled = false;
+    if (lettersNext) lettersNext.disabled = false;
+  }
+
+  function openLetters() {
+    if (!lettersEl) return;
+    renderLetter(0);
+    if (artDetailOpen) closeArtDetail();
+    if (commissionEl && commissionEl.classList.contains('show')) closeCommission();
+    if (giftEl && giftEl.classList.contains('show')) closeGift();
+    lettersEl.classList.add('show');
+    lettersEl.setAttribute('aria-hidden', 'false');
+    hideTooltip();
+    hovered = null;
+    if (Sound.on) Sound.page();
+  }
+
+  function closeLetters() {
+    if (!lettersEl) return;
+    lettersEl.classList.remove('show');
+    lettersEl.setAttribute('aria-hidden', 'true');
+  }
+
+  if (lettersEl) {
+    lettersEl.addEventListener('click', function (e) {
+      if (e.target === lettersEl || e.target.classList.contains('letters-backdrop') ||
+          e.target.id === 'letters-close') { closeLetters(); return; }
+    });
+    /* 点在书页左右外侧也能翻页（像翻书一样） */
+    if (lettersPrev) lettersPrev.addEventListener('click', function (e) { e.stopPropagation(); renderLetter(lettersIndex - 1); });
+    if (lettersNext) lettersNext.addEventListener('click', function (e) { e.stopPropagation(); renderLetter(lettersIndex + 1); });
+    document.addEventListener('keydown', function (e) {
+      if (!lettersIsOpen()) return;
+      if (e.key === 'Escape') { closeLetters(); return; }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); renderLetter(lettersIndex - 1); return; }
+      if (e.key === 'ArrowRight') { e.preventDefault(); renderLetter(lettersIndex + 1); }
+    });
+  }
+
   function triggerItem(target) {
     var d = target.userData;
+
+    /* 书：打开「互相写的信」信集；仍计入 8 项进度 */
+    if (d.letterPage) {
+      bounce(target, 0.05);
+      spawnSparks(worldPos(target), d.found ? 0xffd9a0 : 0xffc98a, d.found ? 6 : 16);
+      if (!d.found) {
+        d.found = true; found++; updateProgress();
+        if (found >= CONFIG.items.length) setTimeout(finale, 1300);
+      }
+      openLetters();
+      return;
+    }
 
     /* 礼物盒：打开「礼物盒」作品集；仍计入 8 项进度 */
     if (d.giftPage) {
@@ -4397,6 +4561,12 @@
     giftZoomOpen: function () { return giftZoomOpen(); },
     giftZoomNav: function (d) { renderGiftZoom(giftZoomIndex + (d || 1)); },
     giftZoomIndex: function () { return giftZoomIndex; },
+    openLetters: function () { openLetters(); },
+    closeLetters: function () { closeLetters(); },
+    lettersOpen: function () { return lettersIsOpen(); },
+    lettersCount: function () { return LETTERS.length; },
+    letterIndex: function () { return lettersIndex; },
+    letterNav: function (d) { renderLetter(lettersIndex + (d || 1)); },
     scene: scene,
     room: room,
     camera: camera,

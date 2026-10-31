@@ -789,6 +789,296 @@ body {
   .art-thumb-label { font-size: 10px; }
 }
 
+/* =================== 桌上的书 · 互相写的信 =================== */
+.letters {
+  position: fixed;
+  inset: 0;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3vh 4vw;
+  background: radial-gradient(78% 78% at 50% 42%, rgba(48, 33, 20, 0.9) 0%, rgba(8, 5, 3, 0.97) 74%);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .5s ease, visibility .5s;
+}
+.letters.show { opacity: 1; visibility: visible; }
+.letters-backdrop { position: absolute; inset: 0; }
+
+.letters-book {
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 700px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 17px 17px 12px;
+  border-radius: 8px;
+  background: linear-gradient(152deg, #3d271a 0%, #26170f 44%, #190f09 100%);
+  box-shadow:
+    0 40px 100px -30px #000,
+    0 0 0 1px rgba(255, 214, 160, 0.22),
+    inset 0 0 0 1px rgba(255, 220, 180, 0.06);
+  transform: translateY(16px) rotate(-0.4deg);
+  transition: transform .6s cubic-bezier(.16, 1, .3, 1);
+}
+.letters.show .letters-book { transform: none; }
+
+.letters-close {
+  position: absolute;
+  z-index: 4;
+  top: -13px;
+  right: -13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 225, 185, 0.34);
+  background: rgba(30, 18, 12, 0.92);
+  color: #f3e2c8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease;
+}
+.letters-close:hover { background: rgba(74, 46, 28, 0.95); color: #fff; }
+
+.letters-sheet {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  border-radius: 3px 5px 5px 3px;
+  background:
+    repeating-linear-gradient(116deg, rgba(150, 120, 80, 0.045) 0 2px, rgba(0, 0, 0, 0) 2px 7px),
+    linear-gradient(104deg, #ecdfc5 0%, #f7eeda 24%, #faf3e2 68%, #ecdec2 100%);
+  box-shadow:
+    inset 20px 0 30px -22px rgba(90, 60, 30, 0.6),
+    inset 0 0 44px rgba(160, 128, 82, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.letters-spine {
+  position: relative;
+  flex: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  border-right: 1px solid rgba(120, 90, 55, 0.26);
+  box-shadow: inset -11px 0 15px -13px rgba(80, 50, 25, 0.65);
+}
+.letters-spine span {
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 8px;
+  letter-spacing: 0.34em;
+  color: rgba(112, 82, 48, 0.58);
+  max-height: 62%;
+  overflow: hidden;
+}
+.letters-spine i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(120, 90, 58, 0.3);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+
+.letters-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 105, 65, 0.42) transparent;
+}
+.letters-scroll::-webkit-scrollbar { width: 5px; }
+.letters-scroll::-webkit-scrollbar-thumb { background: rgba(140, 105, 65, 0.36); border-radius: 3px; }
+
+.letters-page {
+  display: flex;
+  flex-direction: column;
+  min-height: clamp(340px, 48vh, 500px);
+  padding: 36px 40px 26px 34px;
+  color: #3a2b1d;
+  font-family: var(--serif);
+}
+.letters-page.turning { animation: leafTurn .46s cubic-bezier(.22, 1, .36, 1); }
+
+.let-eyebrow {
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  color: rgba(94, 66, 38, 0.58);
+}
+.let-orn {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 12.5px;
+  letter-spacing: 0.16em;
+  color: #7d5832;
+}
+.let-orn-sub {
+  text-align: center;
+  margin-top: 3px;
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: 0.14em;
+  color: rgba(94, 66, 38, 0.62);
+}
+.let-orn-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(104, 74, 42, 0.72);
+}
+.let-orn-line::before,
+.let-orn-line::after {
+  content: "";
+  width: 42px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(120, 90, 55, 0.45), transparent);
+}
+.let-mono {
+  width: fit-content;
+  margin: 16px auto 0;
+  text-align: left;
+  font-size: 10.5px;
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+  color: rgba(88, 62, 36, 0.72);
+  white-space: pre-wrap;
+}
+.let-heart {
+  display: block;
+  width: 168px;
+  height: auto;
+  margin: 22px auto 4px;
+  overflow: visible;
+}
+.let-no {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: rgba(94, 66, 38, 0.5);
+}
+
+.let-block { margin-top: 22px; }
+.let-who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.let-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  font-size: 12.5px;
+  letter-spacing: 0;
+  color: #fdf4e4;
+  background: radial-gradient(circle at 34% 30%, #b2543f, #87301f);
+  box-shadow: 0 2px 7px rgba(120, 45, 30, 0.32), inset 0 0 0 1px rgba(255, 235, 210, 0.28);
+}
+.let-block.winter .let-seal { background: radial-gradient(circle at 34% 30%, #4a6b73, #2d474e); box-shadow: 0 2px 7px rgba(30, 55, 60, 0.32), inset 0 0 0 1px rgba(225, 245, 245, 0.24); }
+.let-who em {
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: 0.26em;
+  color: rgba(94, 66, 38, 0.72);
+}
+.let-who::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(to right, rgba(120, 90, 55, 0.28), rgba(120, 90, 55, 0));
+}
+.let-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 2.12;
+  letter-spacing: 0.022em;
+  text-align: justify;
+  text-indent: 2em;
+  color: #39291a;
+}
+.let-sign {
+  margin: 26px 0 18px;
+  text-align: right;
+  font-size: 12.5px;
+  letter-spacing: 0.16em;
+  color: #6d4d2b;
+}
+.let-end {
+  margin: auto 0 0;
+  padding-top: 13px;
+  border-top: 1px dashed rgba(120, 90, 55, 0.3);
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(94, 66, 38, 0.56);
+}
+
+.letters-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 3px 1px;
+}
+.letters-btn {
+  border: 1px solid rgba(255, 222, 180, 0.26);
+  background: transparent;
+  color: #f0dcc0;
+  font-family: var(--serif);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  padding: 7px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .25s ease, border-color .25s ease, opacity .25s ease;
+}
+.letters-btn:hover { background: rgba(255, 220, 175, 0.12); border-color: rgba(255, 225, 185, 0.55); }
+.letters-btn[disabled] { opacity: 0.28; cursor: default; }
+.letters-counter {
+  font-family: var(--serif);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: rgba(240, 220, 192, 0.62);
+  white-space: nowrap;
+}
+
+@keyframes leafTurn {
+  from { opacity: 0; transform: translateX(20px) rotateY(-7deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .letters-book { width: 96vw; padding: 10px 10px 8px; }
+  .letters-close { top: -11px; right: -9px; width: 32px; height: 32px; font-size: 18px; }
+  .letters-spine { flex-basis: 18px; }
+  .letters-spine span { display: none; }
+  .letters-page { min-height: 48vh; padding: 24px 17px 22px 13px; }
+  .let-text { font-size: 14.5px; line-height: 2; }
+  .let-orn { font-size: 11.5px; }
+  .letters-btn { padding: 6px 10px; font-size: 10.5px; letter-spacing: 0.08em; }
+  .letters-counter { font-size: 9.5px; letter-spacing: 0.12em; }
+}
+
 /* =================== 动画 =================== */
 @keyframes twinkle {
   0%, 100% { opacity: .55; }

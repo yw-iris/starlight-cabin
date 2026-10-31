@@ -3220,14 +3220,13 @@
   register(sofa, 'sofa');
   register(gramoObj.group, 'gramo', {
     react: function () {
-      var playing = Sound.musicPlaying();
-      if (playing) {
-        Sound.music(false);
+      if (Sound.radioPlaying()) {
+        Sound.stopRadio();
         gramoObj.record.userData.spin = 0;
         this.text = '再点一下，<br/>接着把这首听完。';
       } else {
         if (!Sound.on) Sound.enable();          // 确保总音量已开
-        Sound.music(true);
+        Sound.playRadio();
         gramoObj.record.userData.spin = 1;
         tween(gramoObj.horn.rotation, 'x', 0.28, 1.2, 0.1);
         this.text = '唱片转起来了，<br/>今晚的歌，单曲循环。';
@@ -4171,6 +4170,7 @@
      ======================================================================= */
   var Sound = (function () {
     var ctx = null, master = null, on = false, padTimer = null, pluckTimer = null;
+    var radioEl = null, radioSrc = null, radioOn = false;
     var chordIdx = 0;
     var chords = [
       [174.61, 261.63, 329.63, 392.00],
@@ -4279,6 +4279,20 @@
       return true;
     }
 
+    /* 留声机 mp3：从视频提取的背景音乐，单曲循环；经 master 受总音量控制 */
+    function ensureRadio() {
+      if (radioEl) return true;
+      if (!ctx) return false;
+      try {
+        radioEl = new Audio('audio/radio.mp3');
+        radioEl.loop = true;
+        radioEl.preload = 'auto';
+        radioSrc = ctx.createMediaElementSource(radioEl);
+        radioSrc.connect(master);
+      } catch (e) { radioSrc = null; }
+      return true;
+    }
+
     function pad() {
       if (!ctx || !on) return;
       var now = ctx.currentTime;
@@ -4371,7 +4385,19 @@
       page: function () { blip([420, 380], 0.05, 0.35); },
       purr: function () { blip([110, 138], 0.045, 0.7); },
       music: function (state) { state ? startMusic() : stopMusic(); },
-      musicPlaying: function () { return musicOn; }
+      musicPlaying: function () { return musicOn; },
+      radio: function () { return radioEl; },
+      playRadio: function () {
+        if (!ensure()) return;
+        if (!ensureRadio()) return;
+        try { var p = radioEl.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+        radioOn = true;
+      },
+      stopRadio: function () {
+        if (radioEl) try { radioEl.pause(); } catch (e) {}
+        radioOn = false;
+      },
+      radioPlaying: function () { return radioOn; }
     };
   })();
 
@@ -4548,6 +4574,8 @@
     finale: finale,
     count: function () { return found; },
     musicPlaying: function () { return Sound.musicPlaying(); },
+    radioPlaying: function () { return Sound.radioPlaying(); },
+    radio: function () { return Sound.radio(); },
     openArt: function (kind) { openArtDetail(kind); },
     artOpen: function () { return artDetailOpen; },
     closeArt: function () { closeArtDetail(); },

@@ -3135,7 +3135,8 @@
 
     wrap.userData = {
       id: id, name: cfg.name, text: cfg.text, found: false, hover: 1,
-      react: extra && extra.react ? extra.react : null
+      react: extra && extra.react ? extra.react : null,
+      giftPage: !!(extra && extra.giftPage)
     };
     pickables.push(wrap);
     itemById[id] = wrap;
@@ -3237,6 +3238,7 @@
     react: function () { cat.userData.stretch = 1; Sound.purr(); }
   });
   register(giftObj.group, 'gift', {
+    giftPage: true,
     react: function () { giftObj.lid.userData.open = 1; Sound.chime(); }
   });
   register(winObj.group, 'window', {
@@ -3519,6 +3521,50 @@
   var artNextBtn = document.getElementById('art-detail-next');
   var artDetailOpen = false;
   var artCurrentIndex = -1;
+  var artThumbsEl = document.getElementById('art-detail-thumbs');
+  var artThumbsBuilt = false;
+
+  function buildArtThumbs() {
+    if (artThumbsBuilt || !artThumbsEl) return;
+    artOrder.forEach(function (kind, i) {
+      var info = ART_INFO[kind] || { title: kind, ar: 1.35 };
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'art-thumb';
+      cell.setAttribute('role', 'option');
+      cell.dataset.index = i;
+      var tw = 92, th = Math.round(tw / (info.ar || 1.35));
+      var c = document.createElement('canvas');
+      c.width = tw; c.height = th;
+      c.className = 'art-thumb-canvas';
+      var ctx = c.getContext('2d');
+      try { drawArt(ctx, tw, th, kind); } catch (e) { /* 忽略绘制异常 */ }
+      var label = document.createElement('span');
+      label.className = 'art-thumb-label';
+      label.textContent = info.title;
+      cell.appendChild(c);
+      cell.appendChild(label);
+      cell.addEventListener('click', function (e) {
+        e.stopPropagation();
+        artRenderAt(i);
+      });
+      artThumbsEl.appendChild(cell);
+    });
+    artThumbsBuilt = true;
+  }
+
+  function markArtThumb() {
+    if (!artThumbsEl) return;
+    var cells = artThumbsEl.children;
+    for (var i = 0; i < cells.length; i++) {
+      var active = (i === artCurrentIndex);
+      cells[i].classList.toggle('active', active);
+      if (active) {
+        // 滚动到可视区域（居中）
+        cells[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }
 
   function artRenderAt(index) {
     if (!artOrder.length) return;
@@ -3537,12 +3583,14 @@
     artSeriesEl.textContent = info.series ? '· ' + info.series + ' ·' : '';
     artDescEl.textContent = info.desc;
     if (artCounterEl) artCounterEl.textContent = '第 ' + (index + 1) + ' / ' + artOrder.length + ' 幅';
+    markArtThumb();
     if (Sound.on) Sound.page();
   }
 
   function openArtDetail(kind) {
     var index = artOrder.indexOf(kind);
     if (index === -1) { artOrder.push(kind); index = artOrder.length - 1; }
+    buildArtThumbs();
     artRenderAt(index);
 
     artDetailEl.classList.add('show');
@@ -3686,8 +3734,148 @@
     });
   }
 
+  /* -----------------------------------------------------------------------
+     24d. 「礼物盒」作品集（十一张约稿卡面，瀑布流相册 + 放大翻页）
+     ======================================================================= */
+  var GIFT_WORKS = [
+    { f: '1',  name: '独钓寒江雪', note: '枝条新日 · 冬 × 许愿' },
+    { f: '2',  name: '纸帐梅花',   note: '休惊他三春清梦' },
+    { f: '3',  name: '七夕限定',   note: '笼中花与少年' },
+    { f: '4',  name: '以爱为名',   note: '蓝调小提琴 · 电竞周冠' },
+    { f: '5',  name: '逃逸水',     note: '掌心相扣 · 素雪限定' },
+    { f: '6',  name: '真我永存',   note: '限定艺术展 · 2026/1002' },
+    { f: '7',  name: '以爱寻影',   note: '雾山影电竞限定' },
+    { f: '8',  name: '雾绕空山',   note: 'Fog Surrounds the Mountain' },
+    { f: '9',  name: '艺术故事',   note: '街灯与窗 · 黑胶夜' },
+    { f: '10', name: '你',         note: '终之下，我站起来' },
+    { f: '11', name: '如果时间只是人为停止', note: 'if Time is only artificially stopped' }
+  ];
+
+  var giftEl = document.getElementById('gift');
+  var giftGrid = document.getElementById('gift-grid');
+  var giftZoom = document.getElementById('gift-zoom');
+  var giftZoomImg = document.getElementById('gift-zoom-img');
+  var giftZoomCap = document.getElementById('gift-zoom-cap');
+  var giftZoomPrev = document.getElementById('gift-zoom-prev');
+  var giftZoomNext = document.getElementById('gift-zoom-next');
+  var giftBuilt = false;
+  var giftZoomIndex = -1;
+
+  function buildGiftGrid() {
+    if (giftBuilt || !giftGrid) return;
+    giftGrid.innerHTML = '';
+    GIFT_WORKS.forEach(function (w, i) {
+      var src = 'gift/' + w.f + '.jpg';
+      var capText = w.name + ' · ' + w.note;
+      var cell = document.createElement('div');
+      cell.className = 'gift-cell';
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+      cell.setAttribute('aria-label', capText);
+      cell.setAttribute('data-index', i);
+      var img = document.createElement('img');
+      img.src = src;
+      img.alt = capText;
+      img.loading = 'lazy';
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.innerHTML = w.name + '<small>' + w.note + '</small>';
+      cell.appendChild(img);
+      cell.appendChild(cap);
+      giftGrid.appendChild(cell);
+    });
+    giftBuilt = true;
+  }
+
+  function giftZoomOpen() { return !!(giftZoom && giftZoom.classList.contains('show')); }
+  function renderGiftZoom(index) {
+    if (!GIFT_WORKS.length) return;
+    index = (index + GIFT_WORKS.length) % GIFT_WORKS.length;
+    giftZoomIndex = index;
+    var w = GIFT_WORKS[index];
+    giftZoomImg.src = 'gift/' + w.f + '.jpg';
+    giftZoomImg.alt = w.name;
+    giftZoomCap.textContent = w.name + ' · ' + (index + 1) + ' / ' + GIFT_WORKS.length;
+    if (Sound.on) Sound.page();
+  }
+  function openGiftZoom(index) {
+    if (!giftZoom) return;
+    renderGiftZoom(index);
+    giftZoom.classList.add('show');
+    giftZoom.setAttribute('aria-hidden', 'false');
+  }
+  function closeGiftZoom() {
+    if (!giftZoom) return;
+    giftZoom.classList.remove('show');
+    giftZoom.setAttribute('aria-hidden', 'true');
+  }
+
+  function openGift() {
+    if (!giftEl) return;
+    buildGiftGrid();
+    if (artDetailOpen) closeArtDetail();
+    if (commissionEl && commissionEl.classList.contains('show')) closeCommission();
+    giftEl.classList.add('show');
+    giftEl.setAttribute('aria-hidden', 'false');
+    hideTooltip();
+    hovered = null;
+    if (Sound.on) Sound.page();
+  }
+  function closeGift() {
+    if (!giftEl) return;
+    closeGiftZoom();
+    giftEl.classList.remove('show');
+    giftEl.setAttribute('aria-hidden', 'true');
+  }
+
+  if (giftEl) {
+    giftEl.addEventListener('click', function (e) {
+      if (e.target === giftEl || e.target.classList.contains('gift-backdrop') ||
+          e.target.id === 'gift-close') closeGift();
+    });
+    if (giftGrid) {
+      giftGrid.addEventListener('click', function (e) {
+        var cell = e.target.closest ? e.target.closest('.gift-cell') : null;
+        if (cell) openGiftZoom(parseInt(cell.getAttribute('data-index'), 10) || 0);
+      });
+      giftGrid.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var cell = e.target.closest ? e.target.closest('.gift-cell') : null;
+        if (cell) { e.preventDefault(); openGiftZoom(parseInt(cell.getAttribute('data-index'), 10) || 0); }
+      });
+    }
+    if (giftZoom) {
+      giftZoom.addEventListener('click', function (e) {
+        if (e.target === giftZoom || e.target === giftZoomImg) closeGiftZoom();
+      });
+    }
+    if (giftZoomPrev) giftZoomPrev.addEventListener('click', function (e) { e.stopPropagation(); renderGiftZoom(giftZoomIndex - 1); });
+    if (giftZoomNext) giftZoomNext.addEventListener('click', function (e) { e.stopPropagation(); renderGiftZoom(giftZoomIndex + 1); });
+    document.addEventListener('keydown', function (e) {
+      if (giftZoomOpen()) {
+        if (e.key === 'Escape') { closeGiftZoom(); return; }
+        if (e.key === 'ArrowLeft') { renderGiftZoom(giftZoomIndex - 1); return; }
+        if (e.key === 'ArrowRight') { renderGiftZoom(giftZoomIndex + 1); return; }
+      }
+      if (e.key === 'Escape' && giftEl.classList.contains('show')) closeGift();
+    });
+  }
+
   function triggerItem(target) {
     var d = target.userData;
+
+    /* 礼物盒：打开「礼物盒」作品集；仍计入 8 项进度 */
+    if (d.giftPage) {
+      bounce(target, 0.05);
+      spawnSparks(worldPos(target), d.found ? 0xffd9a0 : 0xffc98a, d.found ? 6 : 16);
+      if (d.react) { try { d.react(); } catch (err) {} }
+      if (!d.found) {
+        d.found = true; found++; updateProgress();
+        if (found >= CONFIG.items.length) setTimeout(finale, 1300);
+      }
+      openGift();
+      return;
+    }
 
     /* 画板：打开「和你的约稿」专属作品页 */
     if (d.commissionPage) {
@@ -4201,6 +4389,14 @@
       if (w) openZoom('commission/' + w.f + '.jpg', w.name + ' · ' + w.note);
     },
     commissionZoomOpen: function () { return zoomOpen(); },
+    openGift: function () { openGift(); },
+    closeGift: function () { closeGift(); },
+    giftOpen: function () { return !!(giftEl && giftEl.classList.contains('show')); },
+    giftCount: function () { return GIFT_WORKS.length; },
+    openGiftZoom: function (i) { openGiftZoom(i || 0); },
+    giftZoomOpen: function () { return giftZoomOpen(); },
+    giftZoomNav: function (d) { renderGiftZoom(giftZoomIndex + (d || 1)); },
+    giftZoomIndex: function () { return giftZoomIndex; },
     scene: scene,
     room: room,
     camera: camera,

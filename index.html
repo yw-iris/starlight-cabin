@@ -58,7 +58,8 @@
           <span class="art-detail-counter" id="art-detail-counter"></span>
           <button class="art-detail-btn" id="art-detail-next" type="button" aria-label="下一幅">下一幅 ›</button>
         </div>
-        <div class="art-detail-tip">点击空白处或按 Esc 关闭 · ← → 切换画作</div>
+        <div class="art-detail-thumbs" id="art-detail-thumbs" role="listbox" aria-label="画作缩略图"></div>
+        <div class="art-detail-tip">点击空白处或按 Esc 关闭 · ← → 切换画作 · 点下方缩略图直接跳转</div>
       </div>
     </div>
   </div>
@@ -82,6 +83,31 @@
   <div class="commission-zoom" id="commission-zoom" aria-hidden="true">
     <img class="commission-zoom-img" id="commission-zoom-img" alt="" />
     <div class="commission-zoom-cap" id="commission-zoom-cap"></div>
+  </div>
+
+  <!-- 礼物盒 · 作品集 -->
+  <div class="gift" id="gift" aria-hidden="true">
+    <div class="gift-backdrop"></div>
+    <div class="gift-panel">
+      <button class="gift-close" id="gift-close" type="button" aria-label="关闭">×</button>
+      <header class="gift-head">
+        <div class="gift-kicker">· 雾山影 · 冬 × 许愿 ·</div>
+        <h2 class="gift-title">礼物盒</h2>
+        <p class="gift-sub">拆开之前，先看看里面装着什么——<br/>十一张为她做的图，横的竖的，都在这儿了。</p>
+      </header>
+      <div class="gift-grid" id="gift-grid"></div>
+      <div class="gift-foot">点任意一张放大观看 · 点空白处或按 Esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- 礼物盒 · 放大查看 -->
+  <div class="gift-zoom" id="gift-zoom" aria-hidden="true">
+    <img class="gift-zoom-img" id="gift-zoom-img" alt="" />
+    <div class="gift-zoom-bar">
+      <button class="gift-zoom-btn" id="gift-zoom-prev" type="button" aria-label="上一张">‹</button>
+      <span class="gift-zoom-cap" id="gift-zoom-cap"></span>
+      <button class="gift-zoom-btn" id="gift-zoom-next" type="button" aria-label="下一张">›</button>
+    </div>
   </div>
 
   <div class="veil" id="veil"><span>正在点亮阁楼…</span></div>

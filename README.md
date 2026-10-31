@@ -30,7 +30,7 @@ start index.html                # Windows
 | `vendor/three.min.js` | 本地内置 three.js r0.149 |
 | `commission/` | 「和你的约稿」九张配色稿（点击画架上的画打开的作品页，可放大） |
 | `gift/` | 「礼物盒」十三张约稿卡面（点击礼物盒打开的瀑布流相册，可放大翻页） |
-| `audio/` | 从视频提取的留声机背景音乐 `radio.mp3`（112 秒，点击留声机播放，单曲循环） |
+| `audio/` | 从视频提取的留声机曲目 `radio.mp3`（112 秒，点击留声机播放，单曲循环） |
 | — | 「互相写的信」为纯文本排版，无外部图片 |
 
 ## 内饰要点
@@ -66,6 +66,6 @@ start index.html                # Windows
 - `CanvasTexture` 程序化生成木纹 / 石纹 / 地板 / 地毯 / 夜空 / 10 种手绘油画
 - `ExtrudeGeometry` 圆角体、拱形墙、六边形壁龛、**斜切倒角厚木画框与雕刻感八角框**；`LatheGeometry` 做留声机喇叭与花器
 - `InstancedMesh` 花丛与灯泡、`Sprite` 光晕、`Points` 星空与浮尘
-- WebAudio API 实时合成氛围 pad、拨弦、铃音、翻页声与猫呼噜；**留声机播放的是从视频提取的背景音乐（`audio/radio.mp3`，112 秒，经 MediaElementSource 接入总音量、单曲循环），点击切换播放/暂停；其余氛围音仍为实时合成**
+- WebAudio API 实时合成交互音效（铃音、翻页声、猫呼噜等）；**留声机播放的是从视频提取的音乐（`audio/radio.mp3`，112 秒，经 MediaElementSource 接入总音量、单曲循环），点击切换播放/暂停**。场景不再有自动循环的背景氛围音
 
 > 内饰参考了一组《光·遇》风格的阁楼截图：暖橙木墙、厚橙画框、交叉格栅、串灯藤蔓与向日葵。

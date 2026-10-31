@@ -4169,103 +4169,10 @@
      26. 声音（WebAudio 实时合成）
      ======================================================================= */
   var Sound = (function () {
-    var ctx = null, master = null, on = false, padTimer = null, pluckTimer = null;
+    var ctx = null, master = null, on = false;
     var radioEl = null, radioSrc = null, radioOn = false;
-    var chordIdx = 0;
-    var chords = [
-      [174.61, 261.63, 329.63, 392.00],
-      [130.81, 196.00, 261.63, 329.63],
-      [146.83, 220.00, 293.66, 349.23],
-      [110.00, 164.81, 261.63, 329.63]
-    ];
-    var scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
 
-    var chordIdx = 0;
-    var chords = [
-      [174.61, 261.63, 329.63, 392.00],
-      [130.81, 196.00, 261.63, 329.63],
-      [146.83, 220.00, 293.66, 349.23],
-      [110.00, 164.81, 261.63, 329.63]
-    ];
-    var scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
-
-    /* ===== 留声机旋律：八音盒风的八小节循环（WebAudio 合成，无外部素材） ===== */
-    var musicOn = false, musicTimer = null, musicStep = 0, musicGain = null;
-    // C 大调五声音阶 + 经过音，温和上行下行的摇篮曲式旋律（单位：Hz）
-    var melody = [
-      523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 392.00,
-      440.00, 523.25, 587.33, 440.00, 392.00, 523.25, 392.00, 293.66,
-      523.25, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25,
-      392.00, 440.00, 523.25, 392.00, 293.66, 392.00, 261.63, 196.00
-    ];
-    // 每步对应的低音（根音），营造和声进行
-    var bassLine = [
-      130.81, 130.81, 130.81, 130.81, 174.61, 174.61, 174.61, 174.61,
-      196.00, 196.00, 196.00, 196.00, 130.81, 130.81, 130.81, 130.81,
-      261.63, 261.63, 261.63, 261.63, 220.00, 220.00, 220.00, 220.00,
-      174.61, 174.61, 174.61, 174.61, 130.81, 130.81, 130.81, 98.00
-    ];
-
-    function note(freq, when, dur, vol, type, detune) {
-      var o = ctx.createOscillator();
-      o.type = type || 'triangle';
-      o.frequency.value = freq;
-      o.detune.value = detune || 0;
-      var g = ctx.createGain();
-      g.gain.setValueAtTime(0, when);
-      g.gain.linearRampToValueAtTime(vol, when + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-      var lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = type === 'sine' ? 1400 : 3200;
-      o.connect(g); g.connect(lp); lp.connect(musicGain || master);
-      o.start(when); o.stop(when + dur + 0.05);
-    }
-
-    function scheduleMusicBar() {
-      if (!ctx || !musicOn) return;
-      var now = ctx.currentTime + 0.05;
-      var stepDur = 0.42;                       // 每步 ~0.42s，整圈 ~13.4s
-      for (var i = 0; i < 8; i++) {
-        var f = melody[(musicStep + i) % melody.length];
-        var t = now + i * stepDur;
-        // 主旋律（八音盒三角波，略带高频泛音）
-        note(f, t, stepDur * 1.7, 0.12, 'triangle', rand(-4, 4));
-        // 高八度回声（弱）
-        note(f * 2, t + 0.04, stepDur * 1.2, 0.035, 'sine', 0);
-        // 低音根音（每两步一个长音）
-        if (i % 2 === 0) {
-          var bf = bassLine[(musicStep + i) % bassLine.length];
-          note(bf, t, stepDur * 3.4, 0.07, 'sine', 0);
-        }
-      }
-      musicStep = (musicStep + 8) % melody.length;
-      musicTimer = setTimeout(scheduleMusicBar, stepDur * 8 * 1000 - 120);
-    }
-
-    function startMusic() {
-      if (!ensure()) return;
-      try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
-      if (musicOn) return;
-      musicOn = true;
-      if (!musicGain) {
-        musicGain = ctx.createGain();
-        musicGain.gain.value = 0;
-        musicGain.connect(master);
-      }
-      musicGain.gain.cancelScheduledValues(ctx.currentTime);
-      musicGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.6);
-      musicStep = 0;
-      scheduleMusicBar();
-    }
-    function stopMusic() {
-      musicOn = false;
-      if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
-      if (musicGain && ctx) {
-        musicGain.gain.cancelScheduledValues(ctx.currentTime);
-        musicGain.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
-      }
-    }
-
+    /* ===== 留声机 mp3：从视频提取的背景音乐，单曲循环；经 master 受总音量控制 ===== */
     function ensure() {
       if (ctx) return true;
       try {
@@ -4293,44 +4200,6 @@
       return true;
     }
 
-    function pad() {
-      if (!ctx || !on) return;
-      var now = ctx.currentTime;
-      var chord = chords[chordIdx % chords.length];
-      chordIdx++;
-      var dur = 8.6;
-      chord.forEach(function (f, i) {
-        var o = ctx.createOscillator();
-        o.type = i === 0 ? 'sine' : 'triangle';
-        o.frequency.value = f;
-        o.detune.value = rand(-6, 6);
-        var g = ctx.createGain();
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(0.05 / (i * 0.5 + 1), now + 2.6);
-        g.gain.linearRampToValueAtTime(0.0001, now + dur);
-        var lp = ctx.createBiquadFilter();
-        lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.4;
-        o.connect(g); g.connect(lp); lp.connect(master);
-        o.start(now); o.stop(now + dur + 0.2);
-      });
-    }
-
-    function pluck() {
-      if (!ctx || !on) return;
-      var now = ctx.currentTime;
-      var o = ctx.createOscillator();
-      o.type = 'triangle';
-      o.frequency.value = pick(scale);
-      var g = ctx.createGain();
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.065, now + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
-      var lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = 2600;
-      o.connect(g); g.connect(lp); lp.connect(master);
-      o.start(now); o.stop(now + 2.4);
-    }
-
     function blip(freqs, vol, dur) {
       if (!ctx) return;
       var now = ctx.currentTime;
@@ -4356,11 +4225,6 @@
         on = true;
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setTargetAtTime(0.5, ctx.currentTime, 0.8);
-        if (!padTimer) {
-          pad();
-          padTimer = setInterval(pad, 8200);
-          pluckTimer = setInterval(function () { if (Math.random() > 0.35) pluck(); }, 2600);
-        }
         var btn = document.getElementById('btn-sound');
         btn.classList.add('is-on');
         btn.setAttribute('aria-pressed', 'true');
@@ -4369,7 +4233,6 @@
       },
       disable: function () {
         on = false;
-        stopMusic();
         if (ctx) {
           master.gain.cancelScheduledValues(ctx.currentTime);
           master.gain.setTargetAtTime(0, ctx.currentTime, 0.4);
@@ -4384,8 +4247,6 @@
       chime: function (big) { blip(big ? [880, 1174.66] : [659.25, 987.77], 0.09, 0.9); },
       page: function () { blip([420, 380], 0.05, 0.35); },
       purr: function () { blip([110, 138], 0.045, 0.7); },
-      music: function (state) { state ? startMusic() : stopMusic(); },
-      musicPlaying: function () { return musicOn; },
       radio: function () { return radioEl; },
       playRadio: function () {
         if (!ensure()) return;
@@ -4573,7 +4434,6 @@
     trigger: function (id) { if (itemById[id]) triggerItem(itemById[id]); },
     finale: finale,
     count: function () { return found; },
-    musicPlaying: function () { return Sound.musicPlaying(); },
     radioPlaying: function () { return Sound.radioPlaying(); },
     radio: function () { return Sound.radio(); },
     openArt: function (kind) { openArtDetail(kind); },

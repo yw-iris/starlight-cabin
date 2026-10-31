@@ -3593,8 +3593,20 @@
     artCurrentIndex = index;
     var p = ART_PHOTOS[index];
     if (artPhoto) {
-      artPhoto.src = 'photos/' + p.f + '.jpg';
+      var big = 'photos/' + p.f + '.jpg';
+      artPhoto.dataset.big = big;
       artPhoto.alt = p.title;
+      // 先用已加载的小缩略图占位（秒开），大图加载完成后再无缝替换
+      artPhoto.src = 'photos/thumb/' + p.f + '.jpg';
+      var token = index;
+      var pre = new Image();
+      pre.onload = function () {
+        if (artCurrentIndex === token && artPhoto) {
+          artPhoto.src = big;
+          artPhoto.dataset.ready = '1';
+        }
+      };
+      pre.src = big;
     }
 
     artTitleEl.textContent = p.title;
@@ -4456,7 +4468,8 @@
     closeArt: function () { closeArtDetail(); },
     artOrder: function () { return artOrder.slice(); },
     artPhotoCount: function () { return ART_PHOTOS.length; },
-    artPhotoSrc: function () { return artPhoto ? artPhoto.getAttribute('src') : null; },
+    artPhotoSrc: function () { return artPhoto ? (artPhoto.dataset.big || artPhoto.getAttribute('src')) : null; },
+    artPhotoReady: function () { return !!(artPhoto && artPhoto.dataset.ready === '1'); },
     artIndex: function () { return artCurrentIndex; },
     artNav: function (delta) { artRenderAt(artCurrentIndex + (delta || 1)); },
     openCommission: function () { openCommission(); },

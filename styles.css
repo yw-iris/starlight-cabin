@@ -326,13 +326,13 @@ body {
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.92), 0 0 0 1px rgba(255, 225, 180, 0.16) inset,
               0 2px 0 rgba(255, 220, 170, 0.22) inset;
 }
-.art-detail-frame canvas {
+.art-detail-frame img {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: min(72vw, 680px);
-  max-height: 60vh;
+  width: min(76vw, 700px);
+  height: min(58vh, 440px);
+  object-fit: contain;
   border-radius: 3px;
+  background: #140d06;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
 }
 .art-detail-close {
@@ -454,10 +454,11 @@ body {
   background: rgba(70, 44, 20, 0.9);
   box-shadow: 0 0 0 1px var(--amber) inset, 0 8px 20px -8px rgba(255, 180, 90, 0.5);
 }
-.art-thumb-canvas {
+.art-thumb-photo {
   display: block;
   width: 92px;
-  height: auto;
+  height: 62px;
+  object-fit: cover;
   border-radius: 4px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
 }
@@ -784,8 +785,9 @@ body {
   .gift-cell { margin-bottom: 10px; }
   .gift-sub { font-size: 13px; }
   .art-detail-panel { gap: 16px; padding: 16px 12px; }
+  .art-detail-frame img { width: 86vw; height: min(44vh, 260px); }
   .art-detail-thumbs { max-width: 92vw; }
-  .art-thumb-canvas { width: 68px; }
+  .art-thumb-photo { width: 68px; height: 46px; }
   .art-thumb-label { font-size: 10px; }
 }
 

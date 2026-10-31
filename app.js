@@ -67,6 +67,28 @@
     cafe:      { title: '夜间咖啡馆',   series: '亮着的窗',  ar: 1.35, desc: '街角那盏灯一直亮着，为每一个夜归的人，留一截可以歇脚的光。' }
   };
 
+  /* 画作详情页里展示的照片集（《光·遇》双人记录）。点任意墙画进入同一本相册，可逐张翻看 */
+  var ART_PHOTOS = [
+    { f: '1',  title: '月蚀',   desc: '月亮缺了一角，我们刚好都在。' },
+    { f: '2',  title: '双影',   desc: '两件斗篷挨着，风也放轻了脚步。' },
+    { f: '3',  title: '光鸟',   desc: '蓝洞里飞起的白鸟，替我们说了谢谢。' },
+    { f: '4',  title: '洞窟',   desc: '光落下来的时候，你正好抬头。' },
+    { f: '5',  title: '花冠',   desc: '把整个春天，编进你的头发里。' },
+    { f: '6',  title: '云上',   desc: '坐在云做的岛上，弹一首只有你懂的歌。' },
+    { f: '7',  title: '花海',   desc: '蓝披风掠过草地，惊起一片萤火。' },
+    { f: '8',  title: '心语',   desc: 'My heart is with you，写在气球升起的地方。' },
+    { f: '9',  title: '月牙',   desc: '月牙弯弯，像你笑起来的眼睛。' },
+    { f: '10', title: '日落',   desc: '太阳落下去，我们还没舍得走。' },
+    { f: '11', title: '牵绊',   desc: '一根细绳牵着，走再远也不会散。' },
+    { f: '12', title: '中秋',   desc: '花在杯中，月在杯中，你在身边。' },
+    { f: '13', title: '放灯',   desc: '灯飘向月亮，愿望留在心里。' },
+    { f: '14', title: '夜琴',   desc: '夜里弹琴，星星是唯一的听众。' },
+    { f: '15', title: '烟火树', desc: '整棵树都亮了，像一场不会散的烟火。' },
+    { f: '16', title: '月下',   desc: '月亮很圆，我们很近。' },
+    { f: '17', title: '雪国',   desc: '雪落满城，你在我旁边。' }
+  ];
+  var ART_PHOTO_SERIES = '冬 × 许愿';
+
   /* =======================================================================
      1. 几何工具
      ======================================================================= */
@@ -3513,7 +3535,7 @@
      24b. 画作详情页（点击墙上的画 / 立着的画板进入）
      ======================================================================= */
   var artDetailEl = document.getElementById('art-detail');
-  var artCanvas = document.getElementById('art-detail-canvas');
+  var artPhoto = document.getElementById('art-detail-photo');
   var artTitleEl = document.getElementById('art-detail-title');
   var artSeriesEl = document.getElementById('art-detail-series');
   var artDescEl = document.getElementById('art-detail-desc');
@@ -3527,23 +3549,20 @@
 
   function buildArtThumbs() {
     if (artThumbsBuilt || !artThumbsEl) return;
-    artOrder.forEach(function (kind, i) {
-      var info = ART_INFO[kind] || { title: kind, ar: 1.35 };
+    ART_PHOTOS.forEach(function (p, i) {
       var cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'art-thumb';
       cell.setAttribute('role', 'option');
       cell.dataset.index = i;
-      var tw = 92, th = Math.round(tw / (info.ar || 1.35));
-      var c = document.createElement('canvas');
-      c.width = tw; c.height = th;
-      c.className = 'art-thumb-canvas';
-      var ctx = c.getContext('2d');
-      try { drawArt(ctx, tw, th, kind); } catch (e) { /* 忽略绘制异常 */ }
+      var img = document.createElement('img');
+      img.className = 'art-thumb-photo';
+      img.src = 'photos/thumb/' + p.f + '.jpg';
+      img.alt = p.title;
       var label = document.createElement('span');
       label.className = 'art-thumb-label';
-      label.textContent = info.title;
-      cell.appendChild(c);
+      label.textContent = p.title;
+      cell.appendChild(img);
       cell.appendChild(label);
       cell.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -3568,31 +3587,27 @@
   }
 
   function artRenderAt(index) {
-    if (!artOrder.length) return;
-    index = (index + artOrder.length) % artOrder.length;   // 循环浏览
+    if (!ART_PHOTOS.length) return;
+    var total = ART_PHOTOS.length;
+    index = (index + total) % total;   // 循环浏览
     artCurrentIndex = index;
-    var kind = artOrder[index];
-    var info = ART_INFO[kind] || { title: '画作', series: '', desc: '', ar: 1.35 };
-    var Hpx = 640, Wpx = Math.round(Hpx * info.ar);
-    artCanvas.width = Wpx;
-    artCanvas.height = Hpx;
-    var ctx = artCanvas.getContext('2d');
-    ctx.clearRect(0, 0, Wpx, Hpx);
-    try { drawArt(ctx, Wpx, Hpx, kind); } catch (e) { /* 忽略绘制异常 */ }
+    var p = ART_PHOTOS[index];
+    if (artPhoto) {
+      artPhoto.src = 'photos/' + p.f + '.jpg';
+      artPhoto.alt = p.title;
+    }
 
-    artTitleEl.textContent = info.title;
-    artSeriesEl.textContent = info.series ? '· ' + info.series + ' ·' : '';
-    artDescEl.textContent = info.desc;
-    if (artCounterEl) artCounterEl.textContent = '第 ' + (index + 1) + ' / ' + artOrder.length + ' 幅';
+    artTitleEl.textContent = p.title;
+    artSeriesEl.textContent = '· ' + ART_PHOTO_SERIES + ' ·';
+    artDescEl.textContent = p.desc;
+    if (artCounterEl) artCounterEl.textContent = '第 ' + (index + 1) + ' / ' + total + ' 张';
     markArtThumb();
     if (Sound.on) Sound.page();
   }
 
   function openArtDetail(kind) {
-    var index = artOrder.indexOf(kind);
-    if (index === -1) { artOrder.push(kind); index = artOrder.length - 1; }
     buildArtThumbs();
-    artRenderAt(index);
+    artRenderAt(0);
 
     artDetailEl.classList.add('show');
     artDetailEl.setAttribute('aria-hidden', 'false');
@@ -4440,6 +4455,8 @@
     artOpen: function () { return artDetailOpen; },
     closeArt: function () { closeArtDetail(); },
     artOrder: function () { return artOrder.slice(); },
+    artPhotoCount: function () { return ART_PHOTOS.length; },
+    artPhotoSrc: function () { return artPhoto ? artPhoto.getAttribute('src') : null; },
     artIndex: function () { return artCurrentIndex; },
     artNav: function (delta) { artRenderAt(artCurrentIndex + (delta || 1)); },
     openCommission: function () { openCommission(); },

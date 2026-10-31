@@ -3974,10 +3974,19 @@
     lettersPage.classList.add('turning');
 
     if (lettersScroll) lettersScroll.scrollTop = 0;
+    updateLetterScrollHint();
     if (lettersCounter) lettersCounter.textContent = '第 ' + (lettersIndex + 1) + ' 封 · 共 ' + n + ' 封';
     if (lettersPrev) lettersPrev.disabled = false;
     if (lettersNext) lettersNext.disabled = false;
   }
+
+  /* 内容超过一页时，底部渐隐提示还能往下滑 */
+  function updateLetterScrollHint() {
+    if (!lettersScroll) return;
+    var rest = lettersScroll.scrollHeight - lettersScroll.scrollTop - lettersScroll.clientHeight;
+    lettersScroll.classList.toggle('has-more', rest > 24);
+  }
+  if (lettersScroll) lettersScroll.addEventListener('scroll', updateLetterScrollHint);
 
   function openLetters() {
     if (!lettersEl) return;

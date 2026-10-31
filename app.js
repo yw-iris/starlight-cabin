@@ -3949,6 +3949,7 @@
     var L = LETTERS[lettersIndex];
 
     var html = '<div class="let-eyebrow">互 相 写 的 信</div>';
+    if (lettersIndex === 0) html += '<div class="let-intro">这本书读到第二十一页就停了，后面夹着这些。</div>';
     html += '<div class="let-orn">' + L.orn + '</div>';
     html += '<div class="let-orn-sub">☁ | Mist Mountain Shadow °</div>';
     if (L.mono) html += '<div class="let-mono">' + L.mono + '</div>';

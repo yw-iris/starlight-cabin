@@ -901,7 +901,7 @@ body {
 .letters-page {
   display: flex;
   flex-direction: column;
-  min-height: clamp(340px, 48vh, 500px);
+  min-height: clamp(330px, 44vh, 470px);
   padding: 36px 40px 26px 34px;
   color: #3a2b1d;
   font-family: var(--serif);
@@ -914,6 +914,13 @@ body {
   letter-spacing: 0.5em;
   text-indent: 0.5em;
   color: rgba(94, 66, 38, 0.58);
+}
+.let-intro {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(94, 66, 38, 0.55);
 }
 .let-orn {
   text-align: center;
